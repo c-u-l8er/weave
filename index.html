@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Weave — cost is a type, not a measurement</title>
+<meta name="description" content="Weave turns the [&] stack's resource rung into a static cost certificate: a complexity grade computed from a program's type before it runs. Wired into the box-and-box governance kernel (published on npm), it annihilates programs the budget can't afford — provably, before execution — and the same kernel lets capabilities compose like bricks with & and |> over a shared floor." />
+<style>
+  :root {
+    --bg:#0a0e14; --bg2:#0e141d; --panel:#111824; --ink:#e6edf3; --dim:#9aa7b4;
+    --line:#1e2a39; --acc:#6ee7b7; --acc2:#7dd3fc; --warn:#fca5a5; --gold:#fcd34d;
+    --mono:"SF Mono",ui-monospace,"JetBrains Mono","Fira Code",Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Inter,Roboto,sans-serif;
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body {
+    margin:0; background:radial-gradient(1200px 600px at 70% -10%,#13202e 0%,var(--bg) 55%);
+    color:var(--ink); font-family:var(--sans); line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+  a { color:var(--acc2); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  .wrap { max-width:980px; margin:0 auto; padding:0 22px; }
+  code, .mono { font-family:var(--mono); }
+  .zero { color:var(--acc); font-weight:700; }
+
+  /* hero */
+  header.hero { padding:84px 0 56px; border-bottom:1px solid var(--line); }
+  .badge { display:inline-block; font-family:var(--mono); font-size:12px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--acc); border:1px solid var(--line); border-radius:999px;
+    padding:6px 14px; background:#0d1622; }
+  h1 { font-size:clamp(34px,6vw,60px); line-height:1.05; margin:22px 0 10px; letter-spacing:-.02em; }
+  h1 .amp { background:linear-gradient(90deg,var(--acc),var(--acc2)); -webkit-background-clip:text;
+    background-clip:text; color:transparent; }
+  .lede { font-size:clamp(17px,2.4vw,21px); color:var(--dim); max-width:720px; }
+  .cta { margin-top:30px; display:flex; gap:12px; flex-wrap:wrap; }
+  .btn { font-family:var(--mono); font-size:14px; padding:11px 18px; border-radius:10px;
+    border:1px solid var(--line); background:#0d1622; color:var(--ink); cursor:pointer; }
+  .btn.primary { background:linear-gradient(90deg,#10b981,#0ea5e9); color:#04121a; border:none; font-weight:700; }
+  .btn:hover { transform:translateY(-1px); }
+
+  /* the one-line thesis */
+  .thesis { margin:42px 0; padding:26px 28px; border-left:3px solid var(--acc);
+    background:linear-gradient(90deg,#0f1b16,transparent); border-radius:0 12px 12px 0; }
+  .thesis b { color:var(--ink); }
+
+  section { padding:54px 0; border-bottom:1px solid var(--line); }
+  h2 { font-size:clamp(24px,3.4vw,32px); letter-spacing:-.01em; margin:0 0 6px; }
+  .kicker { font-family:var(--mono); font-size:12px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--acc2); margin:0 0 14px; }
+  .sub { color:var(--dim); max-width:760px; margin:0 0 26px; }
+
+  /* stat row */
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:8px; }
+  .stat { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  .stat .n { font-family:var(--mono); font-size:26px; font-weight:700; color:var(--acc); }
+  .stat .l { color:var(--dim); font-size:13px; margin-top:4px; }
+  @media(max-width:720px){ .stats{ grid-template-columns:repeat(2,1fr);} }
+
+  /* flow diagram */
+  .flow { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-top:10px; }
+  .step { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px;
+    position:relative; }
+  .step .t { font-family:var(--mono); font-size:12px; color:var(--acc2); }
+  .step .d { font-size:13px; color:var(--dim); margin-top:6px; }
+  .step .num { position:absolute; top:-10px; right:10px; font-family:var(--mono); font-size:11px;
+    background:#0d1622; border:1px solid var(--line); border-radius:999px; padding:2px 8px; color:var(--acc); }
+  @media(max-width:820px){ .flow{ grid-template-columns:1fr 1fr; } }
+
+  /* terminal */
+  .term { background:#070b11; border:1px solid var(--line); border-radius:14px; overflow:hidden;
+    box-shadow:0 30px 80px -40px #000; margin-top:8px; }
+  .term .bar { display:flex; gap:7px; align-items:center; padding:11px 14px; background:#0c131c;
+    border-bottom:1px solid var(--line); }
+  .dot { width:11px; height:11px; border-radius:50%; }
+  .dot.r{background:#ff5f56;} .dot.y{background:#ffbd2e;} .dot.g{background:#27c93f;}
+  .term .cmd { margin-left:10px; font-family:var(--mono); font-size:12px; color:var(--dim); }
+  .term pre { margin:0; padding:18px 18px 22px; overflow-x:auto; font-family:var(--mono);
+    font-size:12.5px; line-height:1.55; color:#cdd9e5; }
+  .term pre .c-acc{color:var(--acc);} .term pre .c-acc2{color:var(--acc2);}
+  .term pre .c-warn{color:var(--warn);} .term pre .c-gold{color:var(--gold);}
+  .term pre .c-dim{color:#6b7a89;} .term pre b{color:#fff;}
+
+  /* two-column verdict */
+  .duo { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:8px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:22px; }
+  .card.bad { border-color:#3a1f24; background:linear-gradient(180deg,#161013,var(--panel)); }
+  .card.good { border-color:#1f3a2c; background:linear-gradient(180deg,#0f1714,var(--panel)); }
+  .card h3 { margin:0 0 4px; font-size:18px; }
+  .card .tag { font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; }
+  .card.bad .tag { color:var(--warn); } .card.good .tag { color:var(--acc); }
+  .card .big { font-family:var(--mono); font-size:30px; font-weight:700; margin:12px 0 4px; }
+  .card.bad .big { color:var(--warn); } .card.good .big { color:var(--acc); }
+  .card ul { margin:10px 0 0; padding-left:18px; color:var(--dim); font-size:14px; }
+  @media(max-width:720px){ .duo{ grid-template-columns:1fr; } }
+
+  /* claims grid */
+  .claims { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .claim { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  .claim .h { font-weight:700; margin-bottom:4px; }
+  .claim .m { font-family:var(--mono); font-size:13px; color:var(--acc); }
+  .claim .x { color:var(--dim); font-size:13px; margin-top:6px; }
+  @media(max-width:720px){ .claims{ grid-template-columns:1fr; } }
+
+  .ladder { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  .rung { font-family:var(--mono); font-size:12px; padding:7px 12px; border-radius:8px;
+    border:1px solid var(--line); background:var(--panel); color:var(--dim); }
+  .rung.hot { border-color:#3a1f24; color:var(--warn); }
+  .rung.ok { border-color:#1f3a2c; color:var(--acc); }
+
+  footer { padding:46px 0 70px; color:var(--dim); font-size:13px; }
+  .note { font-size:13px; color:var(--dim); }
+  .pill { font-family:var(--mono); font-size:11px; padding:2px 8px; border:1px solid var(--line);
+    border-radius:6px; color:var(--dim); }
+  .hl { color:var(--ink); }
+
+  /* compose runtime — the "lego layer" */
+  .bricks { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:8px; }
+  .brick { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px;
+    position:relative; overflow:hidden; }
+  .brick::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px;
+    background:linear-gradient(180deg,var(--acc),var(--acc2)); }
+  .brick .op { font-family:var(--mono); font-size:24px; font-weight:700; color:var(--acc); }
+  .brick.floor::before { background:linear-gradient(180deg,var(--warn),#7f1d1d); }
+  .brick.floor .op { color:var(--warn); }
+  .brick h3 { margin:8px 0 4px; font-size:17px; }
+  .brick .law { font-family:var(--mono); font-size:11px; color:var(--dim); margin-top:8px; }
+  @media(max-width:760px){ .bricks{ grid-template-columns:1fr; } }
+
+  /* a little equation strip */
+  .eqn { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:22px 0 8px;
+    font-family:var(--mono); font-size:15px; }
+  .chip { background:var(--panel); border:1px solid var(--line); border-radius:9px; padding:8px 12px; color:var(--ink); }
+  .chip.zero { color:var(--acc); border-color:#1f3a2c; }
+  .chip.die { color:var(--warn); border-color:#3a1f24; }
+  .arr { color:var(--dim); }
+
+  /* install card */
+  .install { display:grid; grid-template-columns:1.1fr .9fr; gap:16px; margin-top:8px; }
+  .install .term { margin-top:0; }
+  .install .why { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px; }
+  .install .why h3 { margin:0 0 8px; font-size:16px; }
+  .install .why ul { margin:0; padding-left:18px; color:var(--dim); font-size:14px; }
+  @media(max-width:760px){ .install{ grid-template-columns:1fr; } }
+</style>
+<script type="module" src="/amp-nav.js"></script>
+</head>
+<body>
+<amp-nav property="weave"></amp-nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="badge">[&amp;] stack · resource rung</span>
+    <h1><span class="amp">Cost is a type,</span><br/>not a measurement.</h1>
+    <p class="lede">
+      <b>Weave</b> computes a <b>static cost certificate</b> for a program — its complexity class read
+      from the program's <em>type</em>, before a single step runs. Wired into the
+      <b>box-and-box</b> governance kernel, a program the budget can&rsquo;t afford is
+      <span class="zero">annihilated&nbsp;(0&#x0332;)</span> — refused provably, ahead of execution.
+    </p>
+    <div class="cta">
+      <a class="btn primary" href="./forge.html">⚙ Open the Forge — run it live →</a>
+      <a class="btn" href="./compose.html">⊞ Compose canvas — snap the bricks →</a>
+      <a class="btn" href="#compose">The lego layer</a>
+      <a class="btn" href="#proof">Check the proof</a>
+      <a class="btn" href="https://github.com/c-u-l8er/weave">GitHub</a>
+    </div>
+
+    <div class="thesis mono">
+      One structural restriction — <b>linearity with stratification</b> — simultaneously
+      (1)&nbsp;makes reduction <b>sound</b>, (2)&nbsp;licenses the <b>oracle-free fast path</b>, and
+      (3)&nbsp;<b>grades cost</b>. The safety invariant and the cost guarantee are the same object.
+    </div>
+  </div>
+</header>
+
+<section id="finding">
+  <div class="wrap">
+    <p class="kicker">The finding</p>
+    <h2>A budget refused an exponential blow-up <em>before running it</em> — and was right.</h2>
+    <p class="sub">
+      An agent had to pick one of four plans under a fixed budget. The highest-utility plan was a trap:
+      an exponential tower. Weave certified each plan&rsquo;s cost class statically; the kernel
+      annihilated the unaffordable classes; the survivor ran to a real answer. Then we ran the refused
+      tower anyway — it detonated, vindicating a refusal made with no execution.
+    </p>
+    <div class="stats">
+      <div class="stat"><div class="n">210</div><div class="l">answer from the governed plan (157 interactions)</div></div>
+      <div class="stat"><div class="n">0&#x0332;</div><div class="l">score given to the highest-utility plan</div></div>
+      <div class="stat"><div class="n">💥</div><div class="l">refused tower detonates (over-space) when run</div></div>
+      <div class="stat"><div class="n">0</div><div class="l">executions needed to refuse it</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <p class="kicker">How the stack composes</p>
+    <h2>Two languages, one decision.</h2>
+    <p class="sub">The author writes ordinary-looking Elixir. The analyzer (Weave) reads the IR and
+      certifies cost. The kernel (box-and-box) governs. Execution is the last step — and only for what
+      survived the floor.</p>
+    <div class="flow">
+      <div class="step"><span class="num">1</span><div class="t">defweave</div><div class="d">Author plans in native Elixir <code>fn</code> / <code>fold</code> syntax → Weave IR.</div></div>
+      <div class="step"><span class="num">2</span><div class="t">classify</div><div class="d">Static cost certificate: complexity <em>rung</em> from the type. No run.</div></div>
+      <div class="step"><span class="num">3</span><div class="t">govern</div><div class="d">box-and-box floor: unaffordable class → <span class="zero">0&#x0332;</span>, annihilated.</div></div>
+      <div class="step"><span class="num">4</span><div class="t">run</div><div class="d">Execute the survivor → a real value, cheaply.</div></div>
+      <div class="step"><span class="num">5</span><div class="t">vindicate</div><div class="d">Run the refused plan anyway → it detonates. The certificate was right.</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="demo">
+  <div class="wrap">
+    <p class="kicker">End to end · the actual transcript</p>
+    <h2>One agent. Four plans. One budget.</h2>
+    <p class="sub"><code>elixir surface/weave_govern.exs</code> — Elixir surface → Weave certificate →
+      box-and-box kernel → execution. Every rank below is the real <code>Weave.classify</code> verdict;
+      the floor decision is real <code>box-and-box</code>; the values are real reductions.</p>
+
+    <div class="term">
+      <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="cmd">$ elixir surface/weave_govern.exs</span></div>
+<pre><span class="c-dim">①  Weave authors (defweave) + STATICALLY certifies each plan — no execution:</span>
+
+   sum_small  (fold + [1..5])   util= 5  →  certificate: <span class="c-acc">rank 1  polynomial</span>
+   sum_big    (fold + [1..20])  util= 7  →  certificate: <span class="c-acc">rank 1  polynomial</span>
+   pow        (c3 c2)           util= 9  →  certificate: <span class="c-warn">rank 2  exponential</span>
+   blast      (c2^5 tower)      util=12  →  certificate: <span class="c-warn">rank 2  exponential</span>
+
+   <span class="c-gold">⚠ a naive utility-maximizer would pick the highest util: "blast" (util 12).</span>
+
+<span class="c-dim">②  box-and-box governs the certificate (admit rung ≤ 1; floor-then-gradient):</span>
+
+   ▸ verdict: <b>sum_big (fold + [1..20])</b>   (margin 2 over runner-up)
+   ranking (affordable, by utility):
+        7  sum_big    (fold + [1..20])
+        5  sum_small  (fold + [1..5])
+   annihilated by the floor (<span class="c-acc">0&#x0332;</span>):
+        <span class="c-warn">✗ pow    (c3 c2)       (raw util 9  → 0&#x0332;)  σ: cost:exponential@rung2</span>
+        <span class="c-warn">✗ blast  (c2^5 tower)  (raw util 12 → 0&#x0332;)  σ: cost:exponential@rung2</span>
+   ledger (closed/conserved): funded 5 → spent 3 on the verdict → 2 remain.
+
+<span class="c-dim">③  The [&amp;] agent RUNS the governed choice — a real answer, cheaply:</span>
+
+   ▸ sum_big (fold + [1..20])
+     normal  ⇒  <span class="c-acc"><b>210</b></span>   (157 interactions)
+
+<span class="c-dim">④  VINDICATION — run the refused, highest-utility plan anyway:</span>
+
+   ▸ blast (c2^5 tower)
+     <span class="c-warn">💥 OVER-SPACE — DETONATED after 623 interactions (budget blown).</span>
+     The certificate refused it STATICALLY — Weave never had to run it to know.
+
+══════════════════════════════════════════════════════════════════════
+  naive agent → <span class="c-warn">💥 detonation</span>.   [&amp;] agent → <span class="c-acc">210</span>.   <b>Cost is a type, and the type decided.</b>
+══════════════════════════════════════════════════════════════════════</pre>
+    </div>
+
+    <div class="duo">
+      <div class="card bad">
+        <span class="tag">naive utility-maximizer</span>
+        <h3>picks the biggest number</h3>
+        <div class="big">💥 detonation</div>
+        <ul>
+          <li>Chooses <code>blast</code> (utility 12).</li>
+          <li>Runs it → <code>over-space</code>, budget blown.</li>
+          <li>Pays the full cost to learn it was a mistake.</li>
+        </ul>
+      </div>
+      <div class="card good">
+        <span class="tag">the [&amp;] agent</span>
+        <h3>asks for the cost certificate first</h3>
+        <div class="big">⇒ 210</div>
+        <ul>
+          <li>Annihilates both exponential plans — <span class="zero">0&#x0332;</span>.</li>
+          <li>Runs the polynomial survivor in 157 interactions.</li>
+          <li>Refused the tower with <span class="hl">zero executions</span>.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="ladder">
+  <div class="wrap">
+    <p class="kicker">The mechanism</p>
+    <h2>The floor annihilates a <em>class</em>, not a number.</h2>
+    <p class="sub">
+      A budget admits a cost <em>class</em> (here: polynomial and below). A program in a higher class
+      isn&rsquo;t &ldquo;expensive&rdquo; — it&rsquo;s a class the budget can&rsquo;t price, so it
+      carries an unresolved conflict and the bridge&rsquo;s floor sends it to
+      <span class="zero">0&#x0332;</span>. No utility, however large, resurrects it. This is the same
+      floor pattern box-and-box already uses for forbidden actions.
+    </p>
+    <div class="ladder">
+      <span class="rung ok">constant</span>
+      <span class="rung ok">linear ✓</span>
+      <span class="rung ok">polynomial ✓ &nbsp;← budget admits ≤ here</span>
+      <span class="rung hot">exponential ✗ → 0&#x0332;</span>
+      <span class="rung hot">tower ✗ → 0&#x0332;</span>
+    </div>
+    <p class="note" style="margin-top:18px">
+      box-and-box is the eight-rung [&amp;] governance kernel; this demo lives on its <b>resource rung</b>
+      (the affine ledger). box-and-box&rsquo;s rung is a <em>runtime</em> ledger — &ldquo;what was
+      spent.&rdquo; Weave supplies the missing piece: the <em>static</em> certificate — &ldquo;what
+      <em>can</em> be spent, in what class, with termination guaranteed.&rdquo;
+    </p>
+  </div>
+</section>
+
+<section id="compose">
+  <div class="wrap">
+    <p class="kicker">New · the lego layer</p>
+    <h2>The same floor that <em>refuses</em> also lets capabilities <em>compose</em>.</h2>
+    <p class="sub">
+      Weave&rsquo;s certificate is one input to a bigger move: in <b>box-and-box</b> (the [&amp;]
+      governance kernel, now <a href="https://www.npmjs.com/package/box-and-box"><code>npm i box-and-box</code></a>)
+      a capability is a <b>Brick</b> — a holder, a <code>|&gt;</code> contract, a modal value, a Weave cost
+      certificate, and CC2 quantities, all in one object. Bricks snap together two ways, and the same
+      absorbing floor <span class="zero">0&#x0332;</span> you just met keeps every composite honest.
+      <b>A brick of bricks is a brick.</b>
+    </p>
+
+    <div class="bricks">
+      <div class="brick">
+        <div class="op">&amp;</div>
+        <h3>compose <em>and</em> — a coalition</h3>
+        <p class="note" style="margin:0">Run capabilities <b>together</b>. Commutative, idempotent,
+          identity <code>&amp;none</code>; holders flatten to one provenance set. <code>retrieve &amp; certify</code>
+          = both, once.</p>
+        <div class="law">CA1–CA4 · idempotent monoid on the capability lattice</div>
+      </div>
+      <div class="brick">
+        <div class="op">|&gt;</div>
+        <h3>compose <em>pipe</em> — a pipeline</h3>
+        <p class="note" style="margin:0">Run capabilities <b>in phase order</b>. Associative, NOT
+          commutative, identity <code>id</code>; quantities follow the CC2 semiring
+          (confidence ∏ · cost Σ · latency max).</p>
+        <div class="law">CP1–CP4 · phase-graded monoid (PULSE order)</div>
+      </div>
+      <div class="brick floor">
+        <div class="op">0&#x0332;</div>
+        <h3>the shared floor</h3>
+        <p class="note" style="margin:0">A backward phase, a type mismatch, an uncertified child, or a
+          cyclic κ collapses the whole composite to <span class="zero">0&#x0332;</span>. Utility cannot
+          resurrect a floored branch — exactly the Weave refusal, generalized.</p>
+        <div class="law">CX1–CX5 · absorbing floor · cost-lattice closure</div>
+      </div>
+    </div>
+
+    <div class="eqn">
+      <span class="chip">retrieve</span><span class="arr">|&gt;</span>
+      <span class="chip">certify</span><span class="arr">|&gt;</span>
+      <span class="chip">govern</span>
+      <span class="arr">⇒</span>
+      <span class="chip">poly · allow · conf 0.838</span>
+      <span class="arr">&nbsp;&nbsp;but&nbsp;&nbsp;</span>
+      <span class="chip">…</span><span class="arr">|&gt;</span>
+      <span class="chip die">util-999 (uncertified)</span>
+      <span class="arr">⇒</span>
+      <span class="chip zero">0&#x0332;</span>
+    </div>
+    <p class="note">
+      <code>graphonomous ▸ weave ▸ box-and-box</code> composes itself: retrieve, then certify (the Weave
+      certificate), then govern (floor-then-gradient) — and survives. Swap in an uncertified step and the
+      pipe floors. The same three rungs that decide a one-shot verdict now decide a <em>composite</em> one.
+    </p>
+
+    <div class="install" style="margin-top:26px">
+      <div class="term">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <span class="cmd">$ npm i box-and-box</span></div>
+<pre><span class="c-dim"># the kernel + the compose runtime, one zero-dep package</span>
+<span class="c-acc2">import</span> { Brick, composeAnd, composePipe, ZERO } <span class="c-acc2">from</span> <span class="c-gold">"box-and-box/compose"</span>;
+
+<span class="c-dim"># a coalition (&) and a pipeline (|&gt;)</span>
+<span class="c-acc2">const</span> team = composeAnd(retrieve, certify);     <span class="c-dim">// run together</span>
+<span class="c-acc2">const</span> line = composePipe(retrieve, certify, govern); <span class="c-dim">// run in phase</span>
+
+<span class="c-dim"># an uncertified child poisons the composite to the floor</span>
+composePipe(retrieve, uncertified) === <span class="c-acc">ZERO</span>;   <span class="c-acc">// 0&#x0332;</span>  ✓</pre>
+      </div>
+      <div class="why">
+        <h3>Why a package?</h3>
+        <ul>
+          <li><b>116 property-tested laws</b> (103 kernel + 13 compose), 2000 trials each.</li>
+          <li>Zero runtime deps — pure ESM, runs in Node and the browser unchanged.</li>
+          <li>The Forge <a href="./compose.html">compose canvas</a> imports this exact runtime, synced
+            verbatim from npm — no CDN, no bundler.</li>
+          <li>Emits CloudEvents <code>OutcomeSignal</code> (learn) + <code>*.pulse.json</code> (the 5
+            PULSE phases) so a composite plugs straight into the loop.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="cta" style="margin-top:24px">
+      <a class="btn primary" href="./compose.html">⊞ Open the compose canvas →</a>
+      <a class="btn" href="https://www.npmjs.com/package/box-and-box">box-and-box on npm</a>
+    </div>
+  </div>
+</section>
+
+<section id="proof">
+  <div class="wrap">
+    <p class="kicker">Proof you can check without running anything</p>
+    <h2>Six claims, each backed by committed text.</h2>
+    <p class="sub">
+      The repo&rsquo;s <a href="https://github.com/c-u-l8er/weave/tree/main/proofs"><code>proofs/</code></a>
+      holds the exact stdout of every script and a by-hand-checkable receipts bundle (finite differences,
+      column scans, integer equality). If a committed file differs from what you regenerate, the proof
+      was fabricated. It isn&rsquo;t.
+    </p>
+    <div class="claims">
+      <div class="claim"><div class="h">1 · The reducer is sound</div><div class="m">12/12 · 3000 random · 1200/1200 fold</div><div class="x">Differential vs a reference evaluator; checker-gated property tests.</div></div>
+      <div class="claim"><div class="h">2 · The cost cliff is real</div><div class="m">src 35 → 9i · bigger src 39 → 💥</div><div class="x">Source size is not a cost signal; iteration depth is.</div></div>
+      <div class="claim"><div class="h">3 · A static verdict predicts it</div><div class="m">rank≤1 detonated: 0</div><div class="x">The type sees the cliff before the term runs — falsifiable predicate, held.</div></div>
+      <div class="claim"><div class="h">4 · The proxy becomes a certificate</div><div class="m">EAL depth = tower height</div><div class="x">Box-decoration; certified-cheap never detonated; degree 1/2/3 recovered.</div></div>
+      <div class="claim"><div class="h">5 · Substrate-independent</div><div class="m">8/8 round-trips · 6/6 vs HVM4</div><div class="x">Agrees with the independent HVM4 runtime (separate C codebase).</div></div>
+      <div class="claim"><div class="h">6 · The certificate governs</div><div class="m">naive → 💥 · [&amp;] → 210</div><div class="x">This page&rsquo;s demo: certify → govern → run → vindicate, across Elixir + Node.</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="honest">
+  <div class="wrap">
+    <p class="kicker">The honest ledger</p>
+    <h2>The claim is exactly this large, and no larger.</h2>
+    <p class="sub">Carried into the proof, not buried.</p>
+    <ul style="color:var(--dim); max-width:760px;">
+      <li>Soundness is empirical over the tested population — <span class="hl">not</span> a mechanized theorem.</li>
+      <li><code>classify</code>&rsquo;s rank is a validated <span class="hl">proxy</span>; EAL upgrades it to a certificate only on the inferable fragment, and <span class="hl">abstains</span> elsewhere — never &ldquo;proven non-elementary.&rdquo;</li>
+      <li>The polynomial <span class="hl">degree</span> is measured; static LAL (Light-Affine, Baillot&ndash;Terui §-boxes) inference is the named next step.</li>
+      <li>The HVM4 cross-check and the Elixir surface depend on external tools; their output is committed so a bare checkout can still <em>see</em> the result.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>
+      <span class="pill">Weave</span>&nbsp; a research prototype · plain Node (v18+), zero dependencies ·
+      <a href="https://github.com/c-u-l8er/weave">github.com/c-u-l8er/weave</a>
+    </p>
+    <p class="note">
+      Reproduce the demo: <code>elixir surface/weave_govern.exs</code> ·
+      Regenerate proofs: <code>node proofs/generate.mjs &amp;&amp; node tools/regenerate-proofs.mjs</code> ·
+      Run the lego layer: <code>npm i box-and-box</code> → <a href="./compose.html">compose canvas</a> ·
+      Part of the [&amp;] stack — structural composition ([&amp;]) · temporal loops (PULSE) · governance (box-and-box).
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

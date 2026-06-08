@@ -1,0 +1,20 @@
+==============================================================================
+  weave proof transcript — eal
+  EAL box decoration = certified elementary tower height
+------------------------------------------------------------------------------
+  command   : node src/weave-eal.mjs
+  generated : 2026-06-07   (regenerate: node tools/regenerate-proofs.mjs)
+  node      : v25.2.1
+  exit code : 0
+==============================================================================
+TERM            EAL?   depth  rung                          certificate (boxed binders)
+--------------------------------------------------------------------------------------------
+  plus c2 c2    yes     1   polynomial                   b2@L1(ord 1) b4@L1(ord 1) b6@L1(ord 1)
+  mul c6 c6     yes     1   polynomial                   b3@L1(ord 1) b5@L1(ord 1)
+  c3 c2 (exp)   yes     2   exponential                  b0@L2(ord 2) b2@L1(ord 1)
+  tower(3)      yes     3   non-elementary (tower ~3)    b0@L3(ord 3) b2@L2(ord 2) b4@L1(ord 1)
+  tower(4)      yes     4   non-elementary (tower ~4)    b0@L4(ord 4) b2@L3(ord 3) b4@L2(ord 2) b6@L1(ord 1)
+  tower(5)      yes     5   non-elementary (tower ~5)    b0@L5(ord 5) b2@L4(ord 4) b4@L3(ord 3) b6@L2(ord 2) b8@L1(ord 1)
+--------------------------------------------------------------------------------------------
+depth = max EAL box nesting = certified elementary tower height. The certificate column
+is the box decoration; it is checked against measured cost in weave-eal-test.mjs.

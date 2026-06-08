@@ -1,0 +1,32 @@
+==============================================================================
+  weave proof transcript — surface
+  Elixir defweave surface lowering to the backend
+------------------------------------------------------------------------------
+  command   : elixir surface/weave_surface.exs
+  generated : 2026-06-07   (regenerate: node tools/regenerate-proofs.mjs)
+  node      : v25.2.1
+  gated     : needs elixir on PATH
+  exit code : 0
+==============================================================================
+== surface compiles to IR ==
+church_two  =>  {"tag":"Lam","name":"f","body":{"tag":"Lam","name":"x","body":{"tag":"App","fun":{"tag":"Var","name":"f"},"arg":{"tag":"App","fun":{"tag":"Var","name":"f"},"arg":{"tag":"Var","name":"x"}}}}}
+
+== analyzer (the backend) reads the IR ==
+classify add        : rank 0  linear
+classify mul        : rank -1  linear (no duplication)
+check    add        : ok=true  κ=0 (single-pass)
+
+== reduce, via the backend ==
+add c2 c3   =>  normal  \f2.\x5.(f2 (f2 (f2 (f2 (f2 x5)))))   [10 interactions]
+classify c2 c2 c2   : rank 2  exponential
+reduce  c2 c2        : normal  \x3.\x716.(x3 (x3 (x3 (x3 x716))))   [16 interactions]
+
+== writable surface: primitives + list ADT + structural recursion (fold) ==
+arith    (2+3)*4         =>  normal  20   [2 interactions]
+sumlist  [1..5]          =>  normal  15   [37 interactions]
+prodlist [1..5]          =>  normal  120   [37 interactions]
+sumbig   [1..20]         =>  normal  210   [157 interactions]
+
+classify sumlist         : rank 1  polynomial
+classify sumbig [1..20]  : rank 1  polynomial   (rank unchanged by length => flat/polynomial)
+check    sumlist         : ok=true  κ=0 (single-pass)

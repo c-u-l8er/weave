@@ -1,0 +1,20 @@
+{
+  "name": "os-weave",
+  "version": "0.1.0",
+  "description": "A static cost certificate for the [&] stack's resource rung — an Interaction-Calculus reducer with EAL box-decoration cost typing.",
+  "type": "module",
+  "license": "MIT",
+  "repository": "github:c-u-l8er/weave",
+  "scripts": {
+    "demo": "node src/weave.mjs",
+    "test": "node test/weave-validate.mjs && node test/weave-proptest.mjs && node test/weave-fold-test.mjs && node test/weave-soundness.mjs && node test/weave-eal-test.mjs && node test/weave-certificate-test.mjs",
+    "test:hvm4": "node test/weave-hvm4-run.mjs",
+    "proofs": "node proofs/generate.mjs && node tools/regenerate-proofs.mjs",
+    "proofs:check": "node tools/regenerate-proofs.mjs --check",
+    "sync:box": "node tools/sync-box-and-box.mjs",
+    "prepare": "node tools/sync-box-and-box.mjs"
+  },
+  "dependencies": {
+    "box-and-box": "^0.10.0"
+  }
+}

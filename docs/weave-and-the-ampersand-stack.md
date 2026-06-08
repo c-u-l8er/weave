@@ -176,10 +176,17 @@ The point of keeping the classifier substrate-independent is precisely so this c
 and validated, but an under-approximation of full Elementary/Light-Affine inference; it reports the
 *rung*, not the polynomial degree, and goes silent on terms that aren't simply-typable.
 
-**The single upgrade that matters:** replace the type-order proxy with real EAL/LAL inference
-(Baillot–Terui; decidable, polynomial). That turns the cost certificate from validated to *proven*,
-closes the soundness gap (the same typing that bounds cost licenses oracle-free reduction), and is
-what makes Weave a real resource rung rather than a convincing prototype of one.
+**The single upgrade that matters (updated — EAL has since shipped).** This doc predates
+`src/weave-eal.mjs`: the type-order proxy has *already* been promoted to a real EAL box-decoration
+certificate (box-nesting depth = certified elementary tower height), validated against measured cost
+in `test/weave-eal-test.mjs` (`eal:true` ⟹ no residue, closing the I1+I2 soundness gap), with the
+depth-1 polynomial *degree* recovered empirically in `src/weave-eal-degree.mjs`. So the live target is
+no longer "replace the STLC proxy with EAL" — it is two distinct, smaller steps: **(1) promote the
+existing EAL depth certificate into the resource-rung contract** (a stable, IR-hash-bound certificate
+object — see `AmpersandBoxDesign/docs/COMPOSE_RUNTIME.md` §2, which consumes it as `Brick.cost`), and
+**(2) static LAL polynomial-degree inference** (Baillot–Terui §-boxes; decidable, polynomial) as the
+next *proof* upgrade — EAL certifies the tower height; LAL would certify the degree. The certificate
+is what makes Weave a real resource rung; LAL is what turns its degree claim from measured to proven.
 
 **The strategic read (unchanged, and now sharper):** the [&] stack's core idea — governance as an
 annihilating-floor algebra, cognition routed by proved topology, every verdict a certificate, and a

@@ -1,0 +1,21 @@
+==============================================================================
+  weave proof transcript — proptest
+  Checker-gated property test (3000 random simply-typed terms)
+------------------------------------------------------------------------------
+  command   : node test/weave-proptest.mjs
+  generated : 2026-06-07   (regenerate: node tools/regenerate-proofs.mjs)
+  node      : v25.2.1
+  exit code : 0
+==============================================================================
+..400..800..1200..1600..2000..2400..2800
+usable terms: 3000  (skipped 0)
+checker:  accepted 3000   rejected 0
+accepted -> match 3000 | over-budget(4k) 0 | ref-diverged 0 | residue/mismatch 0
+
+DANGEROUS (checker accepted but Weave wrong): 0
+
+--- targeted stress (Church arithmetic) ---
+  PASS  c2 c2            ref:6β  weave:16i normal
+  PASS  c3 c2            ref:14β  weave:31i normal
+  PASS  c2 c2 c2         ref:42β  weave:62i normal
+  PASS  c2 c3 applied    ref:18β  weave:33i normal

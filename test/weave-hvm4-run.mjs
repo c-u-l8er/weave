@@ -15,7 +15,7 @@
 // Requires the HVM4 binary. Defaults to ~/hvm4/src/hvm; override with HVM4_BIN=/path/to/hvm.
 // Pinned build: `clang -O2 -o src/hvm src/hvm.c` in the HigherOrderCO/HVM4 checkout.
 
-import { Var, Lam, App, Dup, Op, Lit, normalize } from "./weave.mjs";
+import { Var, Lam, App, Dup, Op, Lit, normalize } from "../src/weave.mjs";
 import { execFileSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";

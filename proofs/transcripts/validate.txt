@@ -1,0 +1,23 @@
+==============================================================================
+  weave proof transcript — validate
+  Differential validation (12-term battery)
+------------------------------------------------------------------------------
+  command   : node test/weave-validate.mjs
+  generated : 2026-06-07   (regenerate: node tools/regenerate-proofs.mjs)
+  node      : v25.2.1
+  exit code : 0
+==============================================================================
+PASS  I I                    ref:1β  weave:1i normal
+PASS  K c0 c1                ref:2β  weave:2i normal
+PASS  succ c2  (=c3)         ref:3β  weave:5i normal
+PASS  plus c2 c3  (=c5)      ref:6β  weave:10i normal
+PASS  mul c2 c3  (=c6)       ref:7β  weave:16i normal
+PASS  mul c3 c3  (=c9)       ref:9β  weave:25i normal
+PASS  And tru fls (=fls)     ref:4β  weave:7i normal
+PASS  And tru tru (=tru)     ref:4β  weave:7i normal
+PASS  Not tru (=fls)         ref:3β  weave:3i normal
+PASS  S K K W  (SKK=I)       ref:5β  weave:7i normal
+PASS  c2 c2 W  (2^2 apply)   ref:11β  weave:21i normal
+PASS  plus (succ c1) c2 (=c4) ref:9β  weave:12i normal
+
+12/12 passed

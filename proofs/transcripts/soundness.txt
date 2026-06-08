@@ -1,0 +1,30 @@
+==============================================================================
+  weave proof transcript — soundness
+  Classifier soundness battery (no rank<=1 term detonated)
+------------------------------------------------------------------------------
+  command   : node test/weave-soundness.mjs
+  generated : 2026-06-07   (regenerate: node tools/regenerate-proofs.mjs)
+  node      : v25.2.1
+  exit code : 0
+==============================================================================
+ADVERSARIAL BATTERY (verdict vs measured):
+  plus c20 c20                   rank  1 polynomial                 45 i
+  mul c8 c8                      rank  1 polynomial                 145 i
+  mul c12 c12                    rank  1 polynomial                 313 i
+  mul (mul c4 c4) c4             rank  1 polynomial                 151 i
+  plus (mul c6 c6) (mul c6 c6)   rank  1 polynomial                 177 i
+  mul (plus c5 c5) (plus c5 c5)  rank  1 polynomial                 233 i
+  c4 c2 (=2^4)                   rank  2 exponential                54 i
+  c10 c2 (=2^10)                 rank  2 exponential                2112 i
+  c12 c2 (=2^12)                 rank  2 exponential                DETONATED (over-space)
+  c18 c2 (=2^18)                 rank  2 exponential                DETONATED (over-space)
+  tower(4)                       rank  4 non-elementary (tower ~4)  DETONATED (over-space)
+  tower(5)                       rank  5 non-elementary (tower ~5)  DETONATED (over-space)
+
+random simply-typed terms checked: 2000
+rank histogram: {"0":383,"1":63,"2":6,"4":1,"5":1,"-1":1558}
+detonations: 4   (minimum rank among them: 2)
+
+FALSIFIABLE PREDICATE — rank<=1 terms that detonated: 0
+
+PASS: no "polynomial" verdict detonated; every detonation was flagged rank>=2. Verdict sound on this population.

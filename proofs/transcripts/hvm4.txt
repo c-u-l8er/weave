@@ -1,0 +1,24 @@
+==============================================================================
+  weave proof transcript — hvm4
+  HVM4 lowering round-trips (toy reducer, no binary needed)
+------------------------------------------------------------------------------
+  command   : node src/weave-hvm4.mjs
+  generated : 2026-06-07   (regenerate: node tools/regenerate-proofs.mjs)
+  node      : v25.2.1
+  exit code : 0
+==============================================================================
+ROUND-TRIP LOWERING  (term -> HVM source -> term'; NF must match)
+
+  PASS  id               ⤳  λx x
+  PASS  K                ⤳  λx λy x
+  PASS  plus c2 c3       ⤳  ((λm λn λf λx ((m f) ((n f) x)) λf λx (f (f x))) λf λx (f (f (f x))))
+  PASS  mul c2 c3        ⤳  ((λm λn λf (m (n f)) λf λx (f (f x))) λf λx (f (f (f x))))
+  PASS  arith (2+3)*4    ⤳  (* (+ 2 3) 4)
+  PASS  explicit Dup     ⤳  ! &L{a b} = λx x; (a (b 0))
+  PASS  explicit Sup app ⤳  (&L{λx x λy 9} 0)
+  PASS  Era              ⤳  (λz 7 *)
+
+8/8 round-trips preserved the normal form under the toy reducer.
+
+The emitted strings above are HVM-core source. Running them through the real HVM4 and
+checking the normal form matches is the gated next step (clone + cargo build HVM4 preview).

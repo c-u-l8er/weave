@@ -3,6 +3,7 @@
 // Usage: node weave-backend.mjs <normalize|classify|check> '<ir-json>'
 import { normalize, checkInvariants, size } from "./weave.mjs";
 import { classify } from "./weave-classify.mjs";
+import { certify } from "./weave-certificate.mjs";
 
 const Var = (name) => ({ tag: "Var", name }), Lam = (n, b) => ({ tag: "Lam", name: n, body: b }), App = (f, a) => ({ tag: "App", fun: f, arg: a }), Dup = (label, x, y, val, body) => ({ tag: "Dup", label, x, y, val, body }), Op = (op, a, b) => ({ tag: "Op", op, a, b });
 let C = 0; const nm = (p) => `${p}~${C++}`; let L = 0; const lbl = () => `dl${L++}`;
@@ -19,6 +20,10 @@ if (op === "normalize") {
 } else if (op === "classify") {
   const c = classify(term);
   console.log(`rank ${c.rank}  ${c.rung}`);
+} else if (op === "certify") {
+  // emit the full WeaveCostCertificate as JSON — the surface consumes the OBJECT, not a string.
+  const mode = process.argv[4] === "development" ? "development" : "production";
+  console.log(JSON.stringify(certify(term, { mode })));
 } else if (op === "check") {
   const v = checkInvariants(lin(term));
   console.log(`ok=${v.ok}  κ=${v.kappa} (${v.route})` + (v.ok ? "" : "  violations: " + v.violations.map(x => x.invariant).join(",")));

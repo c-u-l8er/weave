@@ -1,0 +1,35 @@
+==============================================================================
+  weave proof transcript — weave
+  Core demo: reducer + invariant checker + closed loop
+------------------------------------------------------------------------------
+  command   : node src/weave.mjs
+  generated : 2026-06-07   (regenerate: node tools/regenerate-proofs.mjs)
+  node      : v25.2.1
+  exit code : 0
+==============================================================================
+LAYER 1  metered reducer
+  duplicated identity applied twice to 0
+    !&L{a b}=\x.x; (a (b 0))
+    -> 0    [4 interactions: {"DUP-LAM":1,"DUP-SUP/annihilate":1,"APP-LAM":2}]
+  a SUPERPOSED function {id, const-9} applied once to 0
+    (&L{\x.x \y.9} 0)  ->  &L{0 9}    [4 interactions]
+
+LAYER 2  invariant checker (enforcement)
+  safe: dup a fn         ok=true  kappa=0 (single-pass)
+  unsafe: \f.(f f)       ok=false kappa=0 (single-pass)
+      -> I1-affine: \f used 2x without a Dup
+  label collision        ok=false kappa=0 (single-pass)
+      -> I2-labels: label 'L' introduced by 2 independent Dups (delta/delta collision risk)
+  recursive (kappa>0)    ok=true  kappa=1 (fixpoint)
+
+LAYER 3a  superposed search — find XOR with NO xor primitive (depth 2)
+  12996 candidates; winner = AND(OR(IA,IB),NAND(IA,IB))
+  naive evals 62041 vs shared 21539  ->  2.9x fewer via shared subexprs
+
+LAYER 3b  closing the loop (round 2 reuses what round 1 discovered)
+  round 1  found AND(OR(IA,IB),NAND(IA,IB))   scanned 12996 candidates, 21539 shared evals
+  learn    LX := xor
+  round 2  found LX(IA,IB)   scanned 40 candidates, 78 shared evals
+  reuse shrank the search ~276x for the same target.
+
+each layer is deliberately small — the point is the SHAPE: invariant -> rule -> enforced -> fed back.

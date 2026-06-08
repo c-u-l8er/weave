@@ -1,0 +1,20 @@
+==============================================================================
+  weave proof transcript — eal-degree
+  Polynomial degree inside the depth-1 rung (measured 1/2/3)
+------------------------------------------------------------------------------
+  command   : node src/weave-eal-degree.mjs
+  generated : 2026-06-07   (regenerate: node tools/regenerate-proofs.mjs)
+  node      : v25.2.1
+  exit code : 0
+==============================================================================
+FAMILY                       EAL depth   samples I(n) over n=2..8                 degree (measured / expected)
+--------------------------------------------------------------------------------------------------------------
+  plus c_n c_n                   1     [9, 11, 13, 15, 17, 19, 21             ]  1 / 1  OK
+  mul c_n c_n                    1     [13, 25, 41, 61, 85, 113, 145          ]  2 / 2  OK
+  mul (mul c_n c_n) c_n          1     [29, 72, 151, 278, 465, 724, 1067      ]  3 / 3  OK
+--------------------------------------------------------------------------------------------------------------
+PASS: every family is EAL-depth 1 (certified polynomial), and the measured degree splits the
+      flat 'polynomial' rung into 1 (add) / 2 (mul) / 3 (mul-of-mul) — exactly the ladder LAL grades.
+
+Note: EAL depth is the STATIC CERTIFICATE; degree is MEASURED. Static LAL degree inference
+(Baillot-Terui §-box counting) is the named next step that would make the degree static too.

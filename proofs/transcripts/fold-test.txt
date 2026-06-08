@@ -1,0 +1,11 @@
+==============================================================================
+  weave proof transcript — fold-test
+  Structural-recursion (fold) differential, 1200 cases
+------------------------------------------------------------------------------
+  command   : node test/weave-fold-test.mjs
+  generated : 2026-06-07   (regenerate: node tools/regenerate-proofs.mjs)
+  node      : v25.2.1
+  exit code : 0
+==============================================================================
+fold differential: 1200 pass, 0 fail (random lists x {add,mul,sub})
+PASS — linearized structural recursion matches ground truth.

@@ -47,7 +47,7 @@ end
 
 defmodule Weave do
   @here Path.dirname(__ENV__.file)
-  @backend Path.join(@here, "weave-backend.mjs")
+  @backend Path.join([@here, "..", "src", "weave-backend.mjs"])
 
   defmacro defweave({name, _, _}, do: body) do
     ir = Weave.Compile.compile(body)
@@ -71,6 +71,14 @@ defmodule Weave do
   def run(ir), do: backend("normalize", ir)
   def classify(ir), do: backend("classify", ir)
   def check(ir), do: backend("check", ir)
+
+  # certify: return the WeaveCostCertificate as a decoded map (binary keys), NOT a prose string.
+  # This is the §2.1 contract object — callers consume verdict/policy fields, never re-parse text.
+  def certify(ir, mode \\ "production") do
+    {out, _} = System.cmd("node", [@backend, "certify", to_json(ir), mode], cd: @here)
+    :json.decode(String.trim(out))
+  end
+
   defp backend(op, ir) do
     {out, _} = System.cmd("node", [@backend, op, to_json(ir)], cd: @here)
     String.trim(out)
@@ -92,27 +100,31 @@ defmodule Demo do
   defweave sumbig   do fold(fn a, b -> a + b end, 0, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]) end
 end
 
-IO.puts("== surface compiles to IR ==")
-IO.puts("church_two  =>  " <> Weave.to_json(Demo.c2()))
-IO.puts("")
-IO.puts("== analyzer (the backend) reads the IR ==")
-IO.puts("classify add        : " <> Weave.classify(Demo.add()))
-IO.puts("classify mul        : " <> Weave.classify(Demo.mul()))
-IO.puts("check    add        : " <> Weave.check(Demo.add()))
-IO.puts("")
-IO.puts("== reduce, via the backend ==")
-six  = Weave.apply(Demo.add(), [Demo.c2(), Demo.c3()])
-IO.puts("add c2 c3   =>  " <> Weave.run(six))
-tower = Weave.apply(Demo.c2(), [Weave.apply(Demo.c2(), [Demo.c2()])])
-IO.puts("classify c2 c2 c2   : " <> Weave.classify(tower))
-IO.puts("reduce  c2 c2        : " <> Weave.run(Weave.apply(Demo.c2(), [Demo.c2()])))
-IO.puts("")
-IO.puts("== writable surface: primitives + list ADT + structural recursion (fold) ==")
-IO.puts("arith    (2+3)*4         =>  " <> Weave.run(Demo.arith()))
-IO.puts("sumlist  [1..5]          =>  " <> Weave.run(Demo.sumlist()))
-IO.puts("prodlist [1..5]          =>  " <> Weave.run(Demo.prodlist()))
-IO.puts("sumbig   [1..20]         =>  " <> Weave.run(Demo.sumbig()))
-IO.puts("")
-IO.puts("classify sumlist         : " <> Weave.classify(Demo.sumlist()))
-IO.puts("classify sumbig [1..20]  : " <> Weave.classify(Demo.sumbig()) <> "   (rank unchanged by length => flat/polynomial)")
-IO.puts("check    sumlist         : " <> Weave.check(Demo.sumlist()))
+# The demo runs when this file is the entry point (`elixir weave_surface.exs`). When another
+# script reuses these modules via Code.require_file, it sets WEAVE_LIB=1 to suppress the demo.
+unless System.get_env("WEAVE_LIB") do
+  IO.puts("== surface compiles to IR ==")
+  IO.puts("church_two  =>  " <> Weave.to_json(Demo.c2()))
+  IO.puts("")
+  IO.puts("== analyzer (the backend) reads the IR ==")
+  IO.puts("classify add        : " <> Weave.classify(Demo.add()))
+  IO.puts("classify mul        : " <> Weave.classify(Demo.mul()))
+  IO.puts("check    add        : " <> Weave.check(Demo.add()))
+  IO.puts("")
+  IO.puts("== reduce, via the backend ==")
+  six = Weave.apply(Demo.add(), [Demo.c2(), Demo.c3()])
+  IO.puts("add c2 c3   =>  " <> Weave.run(six))
+  tower = Weave.apply(Demo.c2(), [Weave.apply(Demo.c2(), [Demo.c2()])])
+  IO.puts("classify c2 c2 c2   : " <> Weave.classify(tower))
+  IO.puts("reduce  c2 c2        : " <> Weave.run(Weave.apply(Demo.c2(), [Demo.c2()])))
+  IO.puts("")
+  IO.puts("== writable surface: primitives + list ADT + structural recursion (fold) ==")
+  IO.puts("arith    (2+3)*4         =>  " <> Weave.run(Demo.arith()))
+  IO.puts("sumlist  [1..5]          =>  " <> Weave.run(Demo.sumlist()))
+  IO.puts("prodlist [1..5]          =>  " <> Weave.run(Demo.prodlist()))
+  IO.puts("sumbig   [1..20]         =>  " <> Weave.run(Demo.sumbig()))
+  IO.puts("")
+  IO.puts("classify sumlist         : " <> Weave.classify(Demo.sumlist()))
+  IO.puts("classify sumbig [1..20]  : " <> Weave.classify(Demo.sumbig()) <> "   (rank unchanged by length => flat/polynomial)")
+  IO.puts("check    sumlist         : " <> Weave.check(Demo.sumlist()))
+end

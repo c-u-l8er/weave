@@ -1,0 +1,25 @@
+==============================================================================
+  weave proof transcript — hvm4-run
+  Differential vs real HVM4
+------------------------------------------------------------------------------
+  command   : node test/weave-hvm4-run.mjs
+  generated : 2026-06-07   (regenerate: node tools/regenerate-proofs.mjs)
+  node      : v25.2.1
+  gated     : needs a built HVM4 binary
+  exit code : 0
+==============================================================================
+HVM4 binary: /home/travis/hvm4/src/hvm
+
+DIFFERENTIAL: toy reducer vs HVM4 (integer outputs)
+
+  PASS  pure arith (2+3)*4       expected  20 | toy  20 | hvm4  20
+  PASS  decode c5                expected   5 | toy   5 | hvm4   5
+  PASS  plus c2 c3               expected   5 | toy   5 | hvm4   5
+  PASS  mul c3 c4                expected  12 | toy  12 | hvm4  12
+  PASS  mul c2 c2 (dup-heavy)    expected   4 | toy   4 | hvm4   4
+  PASS  exp c3 c2 (=2^3)         expected   8 | toy   8 | hvm4   8
+
+6/6 terms agreed across the toy reducer AND HVM4.
+
+Sample emitted HVM4 source (mul c2 c2, decoded):
+  @main = (λm. λn. λf. m(n(f)))(λf. ! d0 &dl18= f; λx. d0₀(d0₁(x)))(λf. ! d1 &dl19= f; λx. d1₀(d1₁(x)))(λn. (n + 1))(0)

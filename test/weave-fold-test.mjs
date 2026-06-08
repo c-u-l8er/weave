@@ -2,7 +2,7 @@
 // For random lists and random operators, the linearized Weave fold must equal JS's own fold.
 // This stresses: Lit, Op, OP-SUP, and N-way duplication of an Op-carrying combiner via the
 // affine linearizer (the exact path the Elixir surface lowers to).
-import { Var, Lam, App, Dup, Lit, Op, normalize, show } from "./weave.mjs";
+import { Var, Lam, App, Dup, Lit, Op, normalize, show } from "../src/weave.mjs";
 
 // --- replicate the backend's affine linearizer (multi-use binder -> explicit Dups) ---
 let C = 0; const nm = (p) => `${p}~${C++}`; let L = 0; const lbl = () => `dl${L++}`;

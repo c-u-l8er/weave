@@ -1,0 +1,24 @@
+==============================================================================
+  weave proof transcript — classify
+  Static rank vs dynamic cost (the type sees the cliff first)
+------------------------------------------------------------------------------
+  command   : node src/weave-classify.mjs
+  generated : 2026-06-07   (regenerate: node tools/regenerate-proofs.mjs)
+  node      : v25.2.1
+  exit code : 0
+==============================================================================
+TERM            STATIC rank/verdict (no execution)      DYNAMIC (actually run)
+------------------------------------------------------------------------------
+  plus c2 c2    rank  1  polynomial                 9 i, normal
+  plus c6 c6    rank  1  polynomial                 17 i, normal
+  mul c2 c2     rank  1  polynomial                 13 i, normal
+  mul c6 c6     rank  1  polynomial                 85 i, normal
+  c3 c2 (exp)   rank  2  exponential                31 i, normal
+  tower(2)      rank  2  exponential                16 i, normal
+  tower(3)      rank  3  non-elementary (tower ~3)  62 i, normal
+  tower(4)      rank  4  non-elementary (tower ~4)  OVER-SPACE (cliff)
+  tower(5)      rank  5  non-elementary (tower ~5)  OVER-SPACE (cliff)
+------------------------------------------------------------------------------
+addition & multiplication: rank 1 regardless of operand — flat, polynomial.
+towers: rank CLIMBS with height (2,3,4,5). rank≥3 flagged non-elementary BEFORE running;
+the dynamic column confirms the detonation lands at tower(4). The type saw the cliff first.

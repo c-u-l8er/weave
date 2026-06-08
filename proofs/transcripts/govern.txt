@@ -1,0 +1,72 @@
+==============================================================================
+  weave proof transcript — govern
+  Stack e2e: certify → govern → run winner (210) → refused tower DETONATES
+------------------------------------------------------------------------------
+  command   : elixir surface/weave_govern.exs
+  generated : 2026-06-07   (regenerate: node tools/regenerate-proofs.mjs)
+  node      : v25.2.1
+  gated     : needs elixir + box-and-box
+  exit code : 0
+==============================================================================
+══════════════════════════════════════════════════════════════════════════════
+  [&] STACK, END TO END  ·  one agent, four plans, one budget
+══════════════════════════════════════════════════════════════════════════════
+
+① Weave authors (defweave) and STATICALLY certifies each plan — no execution:
+
+   sum_small  (fold + [1..5])   util= 5  →  rung poly (depth 1)      [allow]
+   sum_big    (fold + [1..20])  util= 7  →  rung poly (depth 1)      [allow]
+   pow        (c3 c2)           util= 9  →  rung exponential (depth 2) [budget_check]
+   selfapp    (x x, untypable)  util=11  →  UNCERTIFIED ⇒ 0̲          [annihilate]
+   blast      (c2^5 tower)      util=12  →  rung exponential (depth 2) [budget_check]
+
+   ⚠ a naive utility-maximizer would pick the highest util: “blast      (c2^5 tower)” (util 12).
+
+② box-and-box governs the certificate (admit cost rung ≤ 1; floor-then-gradient):
+
+   Weave cost certificate ▸ box-and-box resource rung ▸ floor-then-gradient
+   ──────────────────────────────────────────────────────────────────────────
+     budget: admit cost rung ≤ 1 (polynomial); refuse everything higher.
+     certified programs (rung is STATIC — taken from the type, not measured):
+       sum_small  (fold + [1..5]) util=  5  rung=poly       (rank 1)  price=2
+       sum_big    (fold + [1..20]) util=  7  rung=poly       (rank 1)  price=3
+       pow        (c3 c2)         util=  9  rung=exponential(rank 2)  price=∞
+       selfapp    (x x, untypable) util= 11  rung=uncertified(rank 99)  price=∞
+       blast      (c2^5 tower)    util= 12  rung=exponential(rank 2)  price=∞
+   
+     consume requirement: { σ empty }  — an unaffordable cost class is an unresolved σ conflict
+     ────────────────────────────────────────────────────────────────────────
+     ▸ verdict: sum_big    (fold + [1..20])   (margin 2 over runner-up)
+     ranking (affordable, by utility):
+              7  sum_big    (fold + [1..20])
+              5  sum_small  (fold + [1..5])
+     annihilated by the floor (0̲):
+         ✗ pow        (c3 c2)       (raw util 9 → 0̲)  σ:unresolved conflicts {cost:exponential@rung2}
+         ✗ selfapp    (x x, untypable) (raw util 11 → 0̲)  σ:unresolved conflicts {cost:uncertified@rung99}
+         ✗ blast      (c2^5 tower)  (raw util 12 → 0̲)  σ:unresolved conflicts {cost:exponential@rung2}
+   
+     ledger (closed/conserved): funded 5 tokens → spent 3 on the verdict → 2 remain.
+   
+     “blast      (c2^5 tower)” had the highest raw utility (12) but was vetoed: σ: unresolved conflicts {cost:exponential@rung2}. 0̲ annihilated it; the gradient selected “sum_big    (fold + [1..20])”.
+     ↑ the cost certificate, not the utility heuristic, decided this. Cost is a type.
+
+②b floor-before-utility assertion (certificate-driven):
+
+   ✓ winner “sum_big    (fold + [1..20])” is certified & within budget (rank 1 ≤ 1).
+   ✓ highest-utility “blast      (c2^5 tower)” (util 12) was floored [budget_check] — utility did NOT resurrect it.
+   ✓ uncertified plans annihilate to 0̲ regardless of utility.
+
+③ The [&] agent RUNS the governed choice — a real answer, cheaply:
+
+   ▸ sum_big    (fold + [1..20])
+     normal  ⇒  210   (157 interactions)
+
+④ VINDICATION — run the refused, highest-utility plan anyway:
+
+   ▸ blast      (c2^5 tower)
+     💥 OVER-SPACE — DETONATED after 623 interactions (budget blown).
+     The certificate refused it STATICALLY — Weave never had to run it to know.
+
+══════════════════════════════════════════════════════════════════════════════
+  naive agent → 💥 detonation.   [&] agent → 210.   Cost is a type, and the type decided.
+══════════════════════════════════════════════════════════════════════════════

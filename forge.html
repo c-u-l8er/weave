@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Weave Forge — interpret · certify · govern · evolve</title>
+<style>
+  :root{
+    --bg:#0a0e14; --panel:#0f141c; --panel2:#121925; --line:#1e2733;
+    --ink:#dce3ec; --dim:#8b9bb0; --faint:#5a6b80;
+    --acc:#6ee7b7; --acc2:#7dd3fc; --warn:#fca5a5; --gold:#fcd34d; --violet:#c4b5fd;
+    --mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
+  a{color:var(--acc2);text-decoration:none}
+  a:hover{text-decoration:underline}
+  header{border-bottom:1px solid var(--line);padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  header .brand{font-weight:700;letter-spacing:.5px}
+  header .brand b{color:var(--acc)}
+  header .tag{color:var(--dim);font-size:12.5px}
+  header .right{margin-left:auto;display:flex;gap:14px;font-size:12.5px}
+  .wrap{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:14px;padding:14px;max-width:1500px;margin:0 auto}
+  @media (max-width:960px){.wrap{grid-template-columns:1fr}}
+  .col{display:flex;flex-direction:column;gap:14px;min-width:0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .card>h3{margin:0;padding:10px 14px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+  .card>h3 .hint{margin-left:auto;color:var(--faint);font-size:11px;text-transform:none;letter-spacing:0;font-weight:400}
+  .body{padding:14px}
+  textarea{width:100%;min-height:120px;background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:12px;font-family:var(--mono);font-size:13.5px;resize:vertical;line-height:1.55}
+  textarea:focus{outline:none;border-color:var(--acc2)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .chip{background:var(--panel2);border:1px solid var(--line);color:var(--dim);border-radius:999px;padding:4px 10px;font-family:var(--mono);font-size:12px;cursor:pointer;white-space:nowrap}
+  .chip:hover{border-color:var(--acc2);color:var(--ink)}
+  button{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:var(--sans)}
+  button:hover{border-color:var(--acc2)}
+  button.go{background:linear-gradient(180deg,#123,#0c1a1a);border-color:#1f4f44;color:var(--acc)}
+  button.go:hover{border-color:var(--acc)}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .err{color:var(--warn);font-family:var(--mono);font-size:12.5px;white-space:pre-wrap}
+  /* certificate */
+  .grade{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
+  .badge{flex:1;min-width:120px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+  .badge .k{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:1px}
+  .badge .v{font-size:20px;font-weight:700;font-family:var(--mono);margin-top:3px}
+  .v.poly{color:var(--acc)} .v.exp{color:var(--gold)} .v.tower{color:var(--warn)} .v.na{color:var(--faint)}
+  .pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .pill{font-family:var(--mono);font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
+  .pill.on{border-color:#2c5;color:var(--acc);background:#0c1a14}
+  .pill.off{border-color:#633;color:var(--warn);background:#1a0d0d}
+  /* interpreter */
+  .out{font-family:var(--mono);font-size:13px;background:#06090e;border:1px solid var(--line);border-radius:8px;padding:12px;min-height:48px;white-space:pre-wrap;word-break:break-word}
+  .stat{display:flex;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:12.5px;color:var(--dim);margin-bottom:8px}
+  .stat b{color:var(--ink);font-weight:600}
+  .ok{color:var(--acc)} .boom{color:var(--warn)}
+  .slider{display:flex;align-items:center;gap:10px;margin-top:10px;font-family:var(--mono);font-size:12px;color:var(--dim)}
+  input[type=range]{flex:1;accent-color:var(--acc2)}
+  input[type=number],input[type=text]{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:6px 8px;font-family:var(--mono);font-size:12.5px;width:84px}
+  /* bench table */
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12.5px}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+  th{color:var(--faint);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  td.num{text-align:right}
+  tr.win td{color:var(--acc)}
+  tr.dead td{color:var(--faint);text-decoration:line-through}
+  .verdict{margin-top:10px;font-family:var(--mono);font-size:13px;padding:10px;border-radius:8px;background:#0c1a14;border:1px solid #1f4f44;color:var(--acc)}
+  .annih{color:var(--warn);font-family:var(--mono);font-size:12.5px;margin-top:6px}
+  .miniform{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+  .miniform label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px}
+  select{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:6px 8px;font-family:var(--mono);font-size:12.5px}
+  .note{color:var(--faint);font-size:11.5px;margin-top:8px;line-height:1.5}
+  code{font-family:var(--mono);color:var(--acc2);background:#0c1320;padding:1px 5px;border-radius:4px}
+  .evo .cand{display:flex;align-items:center;gap:10px;padding:7px 8px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:12.5px}
+  .evo .cand:last-child{border-bottom:none}
+  .evo .cand .src{flex:1;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .evo .cand .cls{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line)}
+  .evo .cand button{padding:3px 9px;font-size:11.5px}
+  .crumb{font-size:11px;color:var(--faint);font-family:var(--mono)}
+</style>
+<script type="module" src="/amp-nav.js"></script>
+</head>
+<body>
+<amp-nav property="weave"></amp-nav>
+<header>
+  <div class="brand"><b>weave</b> · forge</div>
+  <div class="tag">interpret · certify · govern · evolve — the resource rung, live in your browser</div>
+  <div class="right">
+    <a href="./compose.html">compose ⊞</a>
+    <a href="./index.html">findings</a>
+    <a href="https://github.com/c-u-l8er/weave" target="_blank" rel="noopener">repo</a>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- LEFT COLUMN -->
+  <div class="col">
+    <div class="card">
+      <h3>① Editor <span class="hint">λ-calculus · integers auto-Church · prelude names</span></h3>
+      <div class="body">
+        <textarea id="src" spellcheck="false">mul (mul 4 4) 4</textarea>
+        <div class="chips" id="chips"></div>
+        <div class="row">
+          <button class="go" id="run">⚙ Compile &amp; Run</button>
+          <button id="addplan">+ add as plan ↓</button>
+          <span class="crumb" id="crumb"></span>
+        </div>
+        <div class="note">
+          Prelude: <code>id</code> <code>succ</code> <code>add</code> <code>mul</code> <code>pow</code>.
+          Integers become Church numerals. Application is juxtaposition; <code>\x.body</code> or <code>λx.body</code> for lambda.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>② Certificate <span class="hint">static — computed from the type, no execution</span></h3>
+      <div class="body">
+        <div class="grade">
+          <div class="badge"><div class="k">cost rung</div><div class="v na" id="b-rung">—</div></div>
+          <div class="badge"><div class="k">type rank</div><div class="v na" id="b-rank">—</div></div>
+          <div class="badge"><div class="k">EAL depth</div><div class="v na" id="b-depth">—</div></div>
+        </div>
+        <div class="pills" id="cert-pills"></div>
+        <div class="note">Rung is the certified cost <em>class</em> before anything runs. EAL depth = certified elementary tower height; <code>eal:true</code> means the certificate is a real bound (oracle-free safe), <code>eal:false</code> means it abstains.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>③ Invariants <span class="hint">affine ledger · label coherence · κ topology</span></h3>
+      <div class="body">
+        <div class="pills" id="inv-pills"><span class="pill">run to check</span></div>
+        <div class="note">The linearizer makes every binder affine (single-use) by inserting <code>dup</code> nodes — the same structural discipline that licenses the fast path and bounds cost. κ is the cyclicity warrant on the reasoning shape.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="col">
+    <div class="card">
+      <h3>④ Interpreter <span class="hint">metered β + sup/dup · time &amp; space vetoes</span></h3>
+      <div class="body">
+        <div class="stat" id="run-stat"><span>status <b>—</b></span></div>
+        <div class="out" id="run-out">Press <b>Compile &amp; Run</b>.</div>
+        <div class="slider">
+          <span>space budget (maxNodes)</span>
+          <input type="range" id="cap" min="500" max="40000" step="500" value="20000" />
+          <span id="cap-val">20000</span>
+        </div>
+        <div class="note">Lower the cap and re-run an exponential/tower term to watch it <span class="boom">💥 detonate</span> (<code>over-space</code>) — source size never predicts this; the cost class does.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>⑤ Governance bench <span class="hint">box-and-box resource-rung floor</span></h3>
+      <div class="body">
+        <div class="miniform">
+          <label>budget: admit rung ≤
+            <select id="budget">
+              <option value="1">polynomial (≤1)</option>
+              <option value="2">exponential (≤2)</option>
+              <option value="3">tower (≤3)</option>
+            </select>
+          </label>
+          <button class="go" id="govern">▸ govern</button>
+          <button id="clearplans">clear</button>
+        </div>
+        <table id="plans">
+          <thead><tr><th>plan</th><th>rung</th><th class="num">util</th><th class="num">price</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div id="govern-out"></div>
+        <div class="note">Floor-then-gradient: <b>feasible ▸ permitted ▸ best</b>. A plan whose cost class the budget refuses is <b>annihilated to 0̲</b> — not down-ranked — no matter how high its utility. <em>Cost is a type, and the type decides.</em></div>
+      </div>
+    </div>
+
+    <div class="card evo">
+      <h3>⑥ Evolve <span class="hint">mutate → re-certify → keep the cheapest class</span></h3>
+      <div class="body">
+        <div class="row" style="margin-top:0">
+          <button class="go" id="evolve">✦ generate neighbors</button>
+          <span class="crumb">mutates literals &amp; swaps add↔mul↔pow, re-classifies with the real engine</span>
+        </div>
+        <div id="evo-out" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Neutralize the engine's `if (process.argv[1] === ...)` demo-guards so the
+  // real, unmodified modules load cleanly in the browser.
+  window.process = { argv: [], env: {} };
+</script>
+<script type="module">
+import { Var, Lam, App, normalize, checkInvariants, show } from "./src/weave.mjs";
+import { classify } from "./src/weave-classify.mjs";
+import { inferEAL } from "./src/weave-eal.mjs";
+
+/* ---------- vendored from src/weave-backend.mjs lin() (engine is read-only) ---------- */
+const Dup=(label,x,y,val,body)=>({tag:"Dup",label,x,y,val,body}),Op=(op,a,b)=>({tag:"Op",op,a,b});
+let C=0; const nm=(p)=>`${p}~${C++}`; let Lc=0; const lbl=()=>`dl${Lc++}`;
+const occ=(t,n)=>t.tag==="Var"?(t.name===n?1:0):t.tag==="Lam"?(t.name===n?0:occ(t.body,n)):t.tag==="App"?occ(t.fun,n)+occ(t.arg,n):t.tag==="Dup"?occ(t.val,n)+((t.x===n||t.y===n)?0:occ(t.body,n)):t.tag==="Op"?occ(t.a,n)+occ(t.b,n):0;
+const rep=(t,n,names,idx)=>t.tag==="Var"?(t.name===n?Var(names[idx.i++]):t):t.tag==="Lam"?(t.name===n?t:Lam(t.name,rep(t.body,n,names,idx))):t.tag==="App"?App(rep(t.fun,n,names,idx),rep(t.arg,n,names,idx)):t.tag==="Op"?Op(t.op,rep(t.a,n,names,idx),rep(t.b,n,names,idx)):t;
+const lin=(t)=>{ if(t.tag==="Var")return t; if(t.tag==="App")return App(lin(t.fun),lin(t.arg)); if(t.tag==="Op")return Op(t.op,lin(t.a),lin(t.b)); if(t.tag==="Lam"){const b=lin(t.body);const k=occ(b,t.name);if(k<=1)return Lam(t.name,b);const cs=Array.from({length:k},()=>nm(t.name));const b2=rep(b,t.name,cs,{i:0});const mk=(s,ci)=>ci===k-2?Dup(lbl(),cs[k-2],cs[k-1],Var(s),b2):(()=>{const r=nm("r");return Dup(lbl(),cs[ci],r,Var(s),mk(r,ci+1));})();return Lam(t.name,mk(t.name,0));} return t; };
+
+/* ---------- Church + parser + prelude (validated prototype) ---------- */
+const church=(n)=>{let body=Var("x");for(let i=0;i<n;i++)body=App(Var("f"),body);return Lam("f",Lam("x",body));};
+const clone=(t)=>JSON.parse(JSON.stringify(t));
+const PRELUDE={ id:"\\x.x", succ:"\\n.\\f.\\x. f (n f x)", add:"\\m.\\n.\\f.\\x. m f (n f x)", mul:"\\m.\\n.\\f. m (n f)", pow:"\\m.\\n. n m" };
+function parse(src, env){
+  let i=0; const s=src;
+  const ws=()=>{while(i<s.length&&/\s/.test(s[i]))i++;};
+  const ident=()=>{ws();let j=i;while(i<s.length&&/[A-Za-z0-9_]/.test(s[i]))i++;return s.slice(j,i);};
+  function atom(){
+    ws(); const c=s[i];
+    if(c==='\\'||c==='λ'){ i++; const names=[]; while(true){const n=ident(); if(!n)break; names.push(n); ws(); if(s[i]==='.'){i++;break;}} let body=term(); for(let k=names.length-1;k>=0;k--)body=Lam(names[k],body); return body; }
+    if(c==='('){ i++; const t=term(); ws(); if(s[i]===')')i++; else throw new Error("expected )"); return t; }
+    if(/[0-9]/.test(c)){ let j=i; while(/[0-9]/.test(s[i]))i++; return church(parseInt(s.slice(j,i),10)); }
+    const id=ident();
+    if(!id) throw new Error("unexpected '"+(c||"EOF")+"' at "+i);
+    if(env&&env[id]) return clone(env[id]);
+    return Var(id);
+  }
+  function term(){ let t=atom(); while(true){ ws(); const c=s[i]; if(c===undefined||c===')'||c==='.')break; if(c==='\\'||c==='λ'){ t=App(t,atom()); continue;} const save=i; let a; try{a=atom();}catch(e){i=save;break;} t=App(t,a);} return t; }
+  const t=term(); ws(); if(i<s.length) throw new Error("trailing input at "+i+": "+s.slice(i)); return t;
+}
+const env={};
+for(const [k,v] of Object.entries(PRELUDE)) env[k]=parse(v,env);
+
+/* ---------- helpers ---------- */
+const $=(id)=>document.getElementById(id);
+const RUNG_NAME=['constant','linear','polynomial','exponential','tower','tower','tower'];
+const rungName=(r)=>RUNG_NAME[r] ?? `tower(${r})`;
+const rungClass=(r)=> r<=1?'poly': r===2?'exp':'tower';
+// decode a normal-form Church numeral string  \f.\x. f (f (... x))  -> integer
+// (vars may be renamed by the reducer, e.g. \f2.\x13. f2 (f2 ... x13))
+function decodeChurch(str){
+  const m=str.match(/^\(?\s*(?:\\|λ)\s*(\w+)\.\s*(?:\\|λ)\s*(\w+)\.\s*([\s\S]*?)\)?$/);
+  if(!m) return null;
+  const [,fvar,xvar,body]=m;
+  const apps=body.match(new RegExp("\\b"+fvar+"\\b","g"));
+  const n=apps?apps.length:0;
+  // body must reduce to xvar (n applications of fvar to xvar)
+  if(n===0) return body.trim()===xvar?0:null;
+  return new RegExp("\\b"+xvar+"\\b").test(body)?n:null;
+}
+
+function certify(src){
+  C=0;Lc=0;
+  const ir=parse(src,env);
+  const cls=classify(ir);
+  let eal; try{eal=inferEAL(ir);}catch(e){eal={eal:false,error:e.message};}
+  return {ir,rank:cls.rank,rung:cls.rung,eal:eal.eal,depth:eal.depth};
+}
+
+/* ---------- Editor + examples ---------- */
+const EXAMPLES=["3","add 2 3","mul 6 6","mul (mul 4 4) 4","pow 3 2","pow 2 4","pow 2 (pow 2 (pow 2 2))","\\f.\\x. f (f x)","succ (succ 5)"];
+const chips=$("chips");
+EXAMPLES.forEach(ex=>{const b=document.createElement("span");b.className="chip";b.textContent=ex;b.onclick=()=>{$("src").value=ex;doRun();};chips.appendChild(b);});
+
+/* ---------- ② Certificate + ③ Invariants render ---------- */
+function renderCert(c){
+  const rc=rungClass(c.rank);
+  $("b-rung").textContent=c.rung; $("b-rung").className="v "+rc;
+  $("b-rank").textContent=c.rank; $("b-rank").className="v "+rc;
+  $("b-depth").textContent=(c.depth==null?"—":c.depth); $("b-depth").className="v "+(c.depth==null?"na":rc);
+  const pills=$("cert-pills"); pills.innerHTML="";
+  const ealPill=document.createElement("span");
+  ealPill.className="pill "+(c.eal?"on":"off");
+  ealPill.textContent=c.eal?"eal:true — certified bound":"eal:false — abstains";
+  pills.appendChild(ealPill);
+}
+function renderInv(ir){
+  const pills=$("inv-pills"); pills.innerHTML="";
+  let inv; try{inv=checkInvariants(lin(ir));}catch(e){inv={ok:false,error:e.message};}
+  const add=(label,on)=>{const p=document.createElement("span");p.className="pill "+(on?"on":"off");p.textContent=label;pills.appendChild(p);};
+  if(inv.error){ add("checker error: "+inv.error,false); return; }
+  add(inv.ok?"affine ✓":"affine ✗", inv.ok);
+  add("labels ✓", inv.ok);
+  const k=inv.kappa??0;
+  const kp=document.createElement("span"); kp.className="pill "+(k>0?"off":"on"); kp.textContent="κ = "+k+(k>0?" (deliberate)":" (acyclic)"); pills.appendChild(kp);
+}
+
+/* ---------- ④ Interpreter ---------- */
+function doRun(){
+  const src=$("src").value.trim();
+  let c;
+  try{ c=certify(src); }
+  catch(e){ $("crumb").innerHTML='<span class="err">parse: '+e.message+'</span>'; return; }
+  $("crumb").textContent="compiled ✓";
+  renderCert(c); renderInv(c.ir);
+  const cap=parseInt($("cap").value,10);
+  const stat=$("run-stat"), out=$("run-out");
+  try{
+    C=0;Lc=0;
+    const w=normalize(lin(c.ir),{budget:5000000,maxNodes:cap});
+    const deton = w.status!=="normal";
+    const term=show(w.term);
+    let n=null; if(!deton) n=decodeChurch(term);
+    stat.innerHTML=`<span>status <b class="${deton?'boom':'ok'}">${deton?'💥 '+w.status:'normal'}</b></span>`
+      +`<span>interactions <b>${w.interactions}</b></span>`
+      +(n!=null?`<span>= <b class="ok">${n}</b></span>`:``);
+    out.textContent = deton
+      ? `DETONATED (${w.status}) after ${w.interactions} interactions — the budget refused it.\nThe certificate (rung ${c.rung}) predicted this class statically.`
+      : term.slice(0,400)+(term.length>400?" …":"");
+  }catch(e){
+    stat.innerHTML='<span>status <b class="boom">error</b></span>';
+    out.innerHTML='<span class="err">'+e.message+'</span>';
+  }
+}
+$("run").onclick=doRun;
+$("cap").oninput=()=>{$("cap-val").textContent=$("cap").value;};
+
+/* ---------- ⑤ Governance bench ---------- */
+let plans=[];
+function addPlan(){
+  const src=$("src").value.trim();
+  let c; try{c=certify(src);}catch(e){alert("parse: "+e.message);return;}
+  const util = Math.max(1, Math.round(3 + c.rank*3 + Math.random()*2)); // higher class → tempting higher util
+  plans.push({src, rank:c.rank, rung:c.rung, util, price: c.rank+1});
+  renderPlans(); $("crumb").textContent="added plan: "+src;
+}
+function renderPlans(){
+  const tb=$("plans").querySelector("tbody"); tb.innerHTML="";
+  plans.forEach((p,idx)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="src">${p.src}</td><td class="${rungClass(p.rank)}">${p.rung}</td>`
+      +`<td class="num">${p.util}</td><td class="num">${p.price}</td>`
+      +`<td><button data-i="${idx}" class="del">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll(".del").forEach(b=>b.onclick=()=>{plans.splice(+b.dataset.i,1);renderPlans();});
+}
+function govern(){
+  const out=$("govern-out");
+  if(!plans.length){ out.innerHTML='<div class="note">No plans. Author a program and press <b>+ add as plan</b>.</div>'; return; }
+  const max=parseInt($("budget").value,10);
+  // floor-then-gradient, faithful to box-and-box: over-budget → annihilated (0̲)
+  const admitted=plans.map((p,i)=>({...p,i,over:p.rank>max}));
+  const live=admitted.filter(p=>!p.over).sort((a,b)=>b.util-a.util);
+  const dead=admitted.filter(p=>p.over);
+  const winner=live[0];
+  const tb=$("plans").querySelector("tbody");
+  [...tb.rows].forEach((r,i)=>{r.className=""; if(admitted[i].over)r.className="dead"; else if(winner&&admitted[i].i===winner.i)r.className="win";});
+  let html="";
+  if(winner){
+    const naive=[...plans].sort((a,b)=>b.util-a.util)[0];
+    const overruled = naive.rank>max;
+    html+=`<div class="verdict">▸ verdict: <b>${winner.src}</b> &nbsp; (rung ${winner.rung}, util ${winner.util})`
+      + (live[1]?` &nbsp;· margin ${winner.util-live[1].util} over runner-up`:``) +`</div>`;
+    if(overruled){
+      html+=`<div class="annih">⚠ a naive utility-maximizer would have picked <b>${naive.src}</b> (util ${naive.util}) — but its cost class (${naive.rung}) is over budget, so the floor annihilated it.</div>`;
+    }
+  } else {
+    html+=`<div class="verdict" style="background:#1a0d0d;border-color:#633;color:var(--warn)">▸ no affordable plan — every option exceeds the budget rung.</div>`;
+  }
+  if(dead.length){
+    html+=`<div class="annih">annihilated by the floor (0̲): `+dead.map(p=>`<b>${p.src}</b> (util ${p.util} → 0̲, σ:{cost:${rungName(p.rank)}@rung${p.rank}})`).join(" · ")+`</div>`;
+  }
+  out.innerHTML=html;
+}
+$("addplan").onclick=addPlan;
+$("govern").onclick=govern;
+$("clearplans").onclick=()=>{plans=[];renderPlans();$("govern-out").innerHTML="";};
+
+/* ---------- ⑥ Evolve ---------- */
+function neighbors(src){
+  const out=new Set();
+  // swap binary head op
+  ["add","mul","pow"].forEach(op=>{
+    ["add","mul","pow"].forEach(op2=>{ if(op!==op2 && new RegExp("\\b"+op+"\\b").test(src)) out.add(src.replace(new RegExp("\\b"+op+"\\b"),op2)); });
+  });
+  // tweak integer literals ±1
+  src.replace(/\d+/g,(m,off)=>{ const n=+m;
+    [n-1,n+1].forEach(v=>{ if(v>=0){ out.add(src.slice(0,off)+v+src.slice(off+m.length)); } });
+    return m;
+  });
+  out.delete(src);
+  return [...out].slice(0,8);
+}
+function evolve(){
+  const src=$("src").value.trim();
+  const out=$("evo-out");
+  const cands=neighbors(src).map(s=>{
+    try{const c=certify(s); return {s,rank:c.rank,rung:c.rung,ok:true};}
+    catch(e){return {s,ok:false};}
+  }).filter(c=>c.ok).sort((a,b)=>a.rank-b.rank);
+  if(!cands.length){ out.innerHTML='<div class="note">No valid neighbors generated.</div>'; return; }
+  out.innerHTML="";
+  cands.forEach(c=>{
+    const row=document.createElement("div"); row.className="cand";
+    const rc=rungClass(c.rank);
+    row.innerHTML=`<span class="src">${c.s}</span><span class="cls ${rc}" style="color:var(--${rc==='poly'?'acc':rc==='exp'?'gold':'warn'})">${c.rung}</span>`;
+    const b=document.createElement("button"); b.textContent="adopt"; b.onclick=()=>{$("src").value=c.s;doRun();};
+    row.appendChild(b); out.appendChild(row);
+  });
+}
+$("evolve").onclick=evolve;
+
+/* ---------- boot ---------- */
+doRun();
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+==============================================================================
+  weave proof transcript — cost
+  The cost cliff, measured (add/mul/tower)
+------------------------------------------------------------------------------
+  command   : node src/weave-cost.mjs
+  generated : 2026-06-07   (regenerate: node tools/regenerate-proofs.mjs)
+  node      : v25.2.1
+  exit code : 0
+==============================================================================
+ADDITION  plus cN cN   (elementary — should stay cheap)
+  plus c2 c2       src   35 | interactions           9 | nf-size       11 | normal
+  plus c3 c3       src   43 | interactions          11 | nf-size       15 | normal
+  plus c4 c4       src   51 | interactions          13 | nf-size       19 | normal
+  plus c5 c5       src   59 | interactions          15 | nf-size       23 | normal
+  plus c6 c6       src   67 | interactions          17 | nf-size       27 | normal
+  plus c8 c8       src   83 | interactions          21 | nf-size       35 | normal
+
+MULTIPLICATION  mul cN cN   (still elementary — polynomial)
+  mul c2 c2        src   28 | interactions          13 | nf-size       11 | normal
+  mul c3 c3        src   36 | interactions          25 | nf-size       21 | normal
+  mul c4 c4        src   44 | interactions          41 | nf-size       35 | normal
+  mul c5 c5        src   52 | interactions          61 | nf-size       53 | normal
+  mul c6 c6        src   60 | interactions          85 | nf-size       75 | normal
+
+EXPONENTIATION TOWER  c2 c2 ... c2   (climbs OUT of elementary)
+  tower(2)         src   19 | interactions          16 | nf-size       11 | normal
+  tower(3)         src   29 | interactions          62 | nf-size       35 | normal
+  tower(4)         src   39 | interactions         366 | nf-size     2001 | over-space
+  tower(5)         src   49 | interactions         366 | nf-size     2011 | over-space
+  tower(6)         src   59 | interactions         366 | nf-size     2021 | over-space
+
+--- the discriminator: source size cannot predict cost ---
+  plus c2 c2   src 35  ->  9 interactions, normal
+  c2 c2 c2 c2  src 39  ->  over-space at 366 interactions, 2001+ nodes
+  comparable syntax, opposite universe. The discriminator isn't length — it's iteration depth,
+  which is exactly what an EAL/Light-Affine type reads. EAL would certify the first (elementary)
+  and REFUSE the tower (non-elementary). The cost type sees the cliff without running into it.

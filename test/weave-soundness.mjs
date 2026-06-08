@@ -3,8 +3,8 @@
 // flagged exponential-or-worse (rank>=2). A counterexample = the cost verdict is unsound. This is
 // the empirical soundness arm of "cost as a type" — the standard we held the reducer to — NOT a
 // proof of EAL faithfulness.
-import { classify } from "./weave-classify.mjs";
-import { Var, Lam, App, Dup, normalize, size } from "./weave.mjs";
+import { classify } from "../src/weave-classify.mjs";
+import { Var, Lam, App, Dup, normalize, size } from "../src/weave.mjs";
 
 let C = 0; const nm = (p) => `${p}~${C++}`; let L = 0; const lbl = () => `dl${L++}`;
 const fr = (t, e = {}) => t.tag === "Var" ? Var(e[t.name] ?? t.name) : t.tag === "Lam" ? (() => { const f = nm(t.name); return Lam(f, fr(t.body, { ...e, [t.name]: f })); })() : t.tag === "App" ? App(fr(t.fun, e), fr(t.arg, e)) : t;

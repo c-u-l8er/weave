@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Weave Forge — compose canvas · snap capability bricks with &amp; |&gt; ⟲</title>
+<style>
+  :root{
+    --bg:#0a0e14; --panel:#0f141c; --panel2:#121925; --line:#1e2733;
+    --ink:#dce3ec; --dim:#8b9bb0; --faint:#5a6b80;
+    --acc:#6ee7b7; --acc2:#7dd3fc; --warn:#fca5a5; --gold:#fcd34d; --violet:#c4b5fd;
+    --mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
+  a{color:var(--acc2);text-decoration:none} a:hover{text-decoration:underline}
+  header{border-bottom:1px solid var(--line);padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  header .brand{font-weight:700;letter-spacing:.5px} header .brand b{color:var(--acc)}
+  header .tag{color:var(--dim);font-size:12.5px}
+  header .right{margin-left:auto;display:flex;gap:14px;font-size:12.5px}
+  .wrap{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:14px;padding:14px;max-width:1500px;margin:0 auto}
+  @media (max-width:960px){.wrap{grid-template-columns:1fr}}
+  .col{display:flex;flex-direction:column;gap:14px;min-width:0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .card>h3{margin:0;padding:10px 14px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+  .card>h3 .hint{margin-left:auto;color:var(--faint);font-size:11px;text-transform:none;letter-spacing:0;font-weight:400}
+  .body{padding:14px}
+  button{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:var(--sans)}
+  button:hover{border-color:var(--acc2)} button:disabled{opacity:.4;cursor:not-allowed}
+  button.go{background:linear-gradient(180deg,#123,#0c1a1a);border-color:#1f4f44;color:var(--acc)}
+  button.go:hover{border-color:var(--acc)}
+  button.op{font-family:var(--mono);font-size:14px;font-weight:600;padding:8px 16px}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .note{color:var(--faint);font-size:11.5px;margin-top:10px;line-height:1.5}
+  code{font-family:var(--mono);color:var(--acc2);background:#0c1320;padding:1px 5px;border-radius:4px}
+  /* palette */
+  .palette{display:flex;flex-wrap:wrap;gap:8px}
+  .pbrick{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 11px;cursor:pointer;font-family:var(--mono);font-size:12.5px;display:flex;flex-direction:column;gap:2px;min-width:130px}
+  .pbrick:hover{border-color:var(--acc2)}
+  .pbrick .pn{color:var(--ink);font-weight:600}
+  .pbrick .ph{color:var(--faint);font-size:11px}
+  .pbrick .pc{font-size:10.5px;margin-top:2px}
+  /* canvas nodes */
+  .canvas{display:flex;flex-direction:column;gap:8px;min-height:60px}
+  .node{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 11px;cursor:pointer;display:flex;align-items:center;gap:10px}
+  .node:hover{border-color:var(--acc2)}
+  .node.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
+  .node.zero{border-color:#633;background:#160d0d}
+  .node .ord{width:20px;height:20px;border-radius:50%;background:var(--acc);color:#06140e;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:var(--mono);flex-shrink:0}
+  .node .nid{flex:1;font-family:var(--mono);font-size:12.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .node .ncc{font-size:10.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);font-family:var(--mono);flex-shrink:0}
+  .node .nu{color:var(--dim);font-family:var(--mono);font-size:11.5px;flex-shrink:0}
+  .node .nx{background:none;border:none;color:var(--faint);padding:0 4px;font-size:14px}
+  .node .nx:hover{color:var(--warn)}
+  .empty{color:var(--faint);font-family:var(--mono);font-size:12.5px;padding:8px}
+  /* badges / pills */
+  .grade{display:flex;gap:10px;flex-wrap:wrap}
+  .badge{flex:1;min-width:110px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+  .badge .k{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:1px}
+  .badge .v{font-size:19px;font-weight:700;font-family:var(--mono);margin-top:3px}
+  .pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .pill{font-family:var(--mono);font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
+  .pill.on{border-color:#2c5;color:var(--acc);background:#0c1a14}
+  .pill.off{border-color:#633;color:var(--warn);background:#1a0d0d}
+  .c-acc{color:var(--acc)} .c-acc2{color:var(--acc2)} .c-gold{color:var(--gold)} .c-warn{color:var(--warn)} .c-faint{color:var(--faint)}
+  .out{font-family:var(--mono);font-size:12px;background:#06090e;border:1px solid var(--line);border-radius:8px;padding:11px;white-space:pre-wrap;word-break:break-word;max-height:220px;overflow:auto}
+  .miniform{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+  .miniform label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px}
+  select{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:6px 8px;font-family:var(--mono);font-size:12.5px}
+  .verdict{margin-top:10px;font-family:var(--mono);font-size:13px;padding:10px;border-radius:8px;background:#0c1a14;border:1px solid #1f4f44;color:var(--acc)}
+  .annih{color:var(--warn);font-family:var(--mono);font-size:12px;margin-top:6px}
+  .selhint{font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+</style>
+<script type="module" src="/amp-nav.js"></script>
+</head>
+<body>
+<amp-nav property="weave"></amp-nav>
+<header>
+  <div class="brand"><b>weave</b> · forge</div>
+  <div class="tag">compose canvas — snap capability <b>bricks</b> with <code>&amp;</code> <code>|&gt;</code> <code>⟲</code>; the verdict is the arithmetic</div>
+  <div class="right">
+    <a href="./forge.html">← resource rung</a>
+    <a href="./index.html">findings</a>
+    <a href="https://github.com/c-u-l8er/weave" target="_blank" rel="noopener">repo</a>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- LEFT -->
+  <div class="col">
+    <div class="card">
+      <h3>① Brick palette <span class="hint">click to drop a capability onto the canvas</span></h3>
+      <div class="body">
+        <div class="palette" id="palette"></div>
+        <div class="note">Each brick is a CC2 capability + holder + <code>|&gt;</code> contract + a box-and-box modal value + a (duck-typed) Weave cost certificate + CC2 semiring quantities. <b>retrieve ▸ certify ▸ govern</b> are the portfolio's own engines.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>② Canvas <span class="hint">select bricks, then snap</span></h3>
+      <div class="body">
+        <div class="row" style="margin-bottom:10px">
+          <button class="op" id="op-and" disabled>A &amp; B</button>
+          <button class="op" id="op-pipe" disabled>A |&gt; B</button>
+          <button class="op" id="op-loop" disabled>⟲ A</button>
+          <button id="op-clear">clear all</button>
+          <span class="selhint" id="selhint">select one brick (⟲) or two (&amp; / |&gt;)</span>
+        </div>
+        <div class="canvas" id="canvas"></div>
+        <div class="note"><code>&amp;</code> = parallel lattice merge (commutative, idempotent, identity <code>&amp;none</code>) · <code>|&gt;</code> = governed phase-graded hand-off (associative, identity <code>id</code>, <b>not</b> commutative) · <code>⟲</code> = wrap in a PULSE loop. Any backward phase, type mismatch, or uncertified child collapses the branch to <span class="c-warn">0̲</span>. A brick of bricks is a brick.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>⑥ Governance bench <span class="hint">box-and-box floor over the canvas roots</span></h3>
+      <div class="body">
+        <div class="miniform">
+          <label>budget: admit cost class ≤
+            <select id="budget">
+              <option value="0">polynomial</option>
+              <option value="1">elementary</option>
+              <option value="2">exponential</option>
+              <option value="3">tower</option>
+            </select>
+          </label>
+          <button class="go" id="govern">▸ govern</button>
+        </div>
+        <div id="govern-out"><div class="note">Drop bricks (or composites) as roots, then govern. Floor-then-gradient: <b>feasible ▸ permitted ▸ best</b>.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT — the panels retarget to the SELECTED node -->
+  <div class="col">
+    <div class="card">
+      <h3>③ Certificate <span class="hint">whole-tree cost — worst class wins</span></h3>
+      <div class="body">
+        <div class="grade">
+          <div class="badge"><div class="k">cost class</div><div class="v c-faint" id="b-cc">—</div></div>
+          <div class="badge"><div class="k">decision</div><div class="v c-faint" id="b-dec">—</div></div>
+          <div class="badge"><div class="k">utility</div><div class="v c-faint" id="b-util">—</div></div>
+        </div>
+        <div class="pills" id="cert-pills"></div>
+        <div class="note">Composite cost = the join (worst) of the parts' Weave classes; an uncertified child poisons the whole assembly to <span class="c-warn">0̲</span> — utility cannot resurrect it.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>④ Alethic value <span class="hint">the floor inputs — β · κ · σ · π</span></h3>
+      <div class="body">
+        <div class="pills" id="val-pills"><span class="pill">select a brick</span></div>
+        <div class="note">β = persistence (weakest link under <code>&amp;</code>), κ = cyclicity warrant, σ = unresolved conflicts (non-empty ⇒ 0̲), π = PULSE phase (the <code>|&gt;</code> order).</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>⑤ Quantities <span class="hint">CC2 semiring — confidence × · cost + · latency max</span></h3>
+      <div class="body">
+        <div class="grade">
+          <div class="badge"><div class="k">confidence (∏)</div><div class="v" id="q-conf">—</div></div>
+          <div class="badge"><div class="k">cost (Σ)</div><div class="v" id="q-cost">—</div></div>
+          <div class="badge"><div class="k">latency (max)</div><div class="v" id="q-lat">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>⑦ Feedback &amp; loop <span class="hint">learn → OutcomeSignal · ⟲ → pulse.json</span></h3>
+      <div class="body">
+        <div class="row">
+          <button class="go" id="fb-ok" disabled>▸ report success</button>
+          <button id="fb-fail" disabled>▸ report failure</button>
+          <span class="selhint" id="fb-target">no brick selected</span>
+        </div>
+        <div class="out" id="fb-out" style="margin-top:10px">Select a brick and report an outcome, or ⟲-wrap it, to emit a CloudEvents PULSE token.</div>
+        <div class="note">The <code>learn</code> phase emits an <code>OutcomeSignal</code> (closing the loop); <code>⟲</code> emits the brick's <code>*.pulse.json</code> loop manifest for free.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // no demo-guards / process refs in compose.mjs|value.mjs, but shim defensively.
+  window.process = { argv: [], env: {} };
+</script>
+<script type="module">
+// the REAL runtime — vendored copies of the canonical box-and-box kernel (see src/box-and-box/README.md).
+// weave/ is a standalone repo, so the Forge canvas imports the runtime locally, like forge.html imports ./src/.
+import { V } from "./src/box-and-box/value.mjs";
+import { Brick, ZERO, isZero, none, idBrick, composeAnd, composePipe } from "./src/box-and-box/compose.mjs";
+
+const $ = (id) => document.getElementById(id);
+const CC_ORDER = ['poly','elementary','exponential','tower'];
+const CC_COLOR = { poly:'c-acc', elementary:'c-acc2', exponential:'c-gold', tower:'c-warn', unknown:'c-warn' };
+
+// duck-typed Weave cost certificate (exactly the fields compose.mjs reads).
+const cert = (cc='poly') => ({
+  subject:{ kind:'weave-ir', hash: cc.slice(0,4)+(Math.random()*1e4|0) },
+  analyzer:{ name:'weave', version:'0.1.0' },
+  verdict:{ certified:true, total:true, oracleFree:true, costClass:cc, ealDepth: cc==='poly'?1:cc==='exponential'?2:3 },
+  policy:{ resourceDecision: cc==='poly'?'allow':cc==='tower'?'escalate':'budget_check', reason:`static ${cc}` }
+});
+const uncert = () => ({
+  subject:{ kind:'weave-ir', hash:'u'+(Math.random()*1e4|0) },
+  analyzer:{ name:'weave', version:'0.1.0' },
+  verdict:{ certified:false, total:false, oracleFree:false, costClass:'unknown' },
+  policy:{ resourceDecision:'annihilate', reason:'untypable — abstained' }
+});
+
+// ── palette: the canonical capability bricks ──
+const PALETTE = [
+  { name:'retrieve',  holder:'graphonomous', from:'query',       into:'evidence',    pi:'retrieve', beta:.95, cc:'poly', q:{confidence:.90,cost:2,latency:30}, util:4 },
+  { name:'certify',   holder:'weave',        from:'evidence',    into:'certificate', pi:'route',    beta:.99, cc:'poly', q:{confidence:.98,cost:1,latency:5},  util:3 },
+  { name:'govern',    holder:'box-and-box',  from:'certificate', into:'verdict',     pi:'act',      beta:.97, cc:'poly', q:{confidence:.95,cost:1,latency:8},  util:5 },
+  { name:'mem_local', holder:'sqlite',       from:'query',       into:'evidence',    pi:'retrieve', beta:.90, cc:'poly', q:{confidence:.85,cost:1,latency:3},  util:2 },
+  { name:'mem_remote',holder:'pgvector',     from:'query',       into:'evidence',    pi:'retrieve', beta:.80, cc:'poly', q:{confidence:.92,cost:4,latency:40}, util:3 },
+  { name:'reason_exp',holder:'weave',        from:'evidence',    into:'plan',        pi:'route',    beta:.90, cc:'exponential', q:{confidence:.7,cost:9,latency:120}, util:9 },
+  { name:'self_app',  holder:'rogue',        from:'evidence',    into:'certificate', pi:'route',    beta:.99, cc:'__uncert__', q:{confidence:1,cost:1,latency:1}, util:999 },
+];
+const mkPaletteBrick = (p) => Brick({
+  id: p.name, holder: p.holder,
+  contract:{ accepts_from:p.from, feeds_into:p.into },
+  value: V({ pi:p.pi, beta:p.beta, sigma:[], kappa:false }),
+  cost: p.cc==='__uncert__' ? uncert() : cert(p.cc),
+  q: p.q, utility: p.util,
+});
+
+// ── canvas state ──
+let nodes = [];          // roots: { key, brick, kind }
+let sel = [];            // selected keys, in click order
+let target = null;       // node whose brick the panels show
+let K = 0; const key = () => 'n'+(K++);
+
+const ccOf = (b) => b?.cost?.verdict?.costClass ?? 'unknown';
+const ccColor = (b) => CC_COLOR[ccOf(b)] || 'c-warn';
+
+function addRoot(brick, kind){ const n={ key:key(), brick, kind }; nodes.push(n); selectOnly(n.key); render(); return n; }
+function selectOnly(k){ sel=[k]; }
+
+// ── palette render ──
+const pal = $('palette');
+PALETTE.forEach(p => {
+  const b = mkPaletteBrick(p);
+  const el = document.createElement('div'); el.className='pbrick';
+  const cc = ccOf(b), col = CC_COLOR[cc]||'c-warn';
+  el.innerHTML = `<span class="pn">${p.name}</span><span class="ph">${p.holder} · ${p.from}▸${p.into}</span>`
+    + `<span class="pc ${col}">${cc==='unknown'?'uncertified ⇒ 0̲':cc} · util ${p.util}</span>`;
+  el.onclick = () => addRoot(mkPaletteBrick(p), 'leaf');
+  pal.appendChild(el);
+});
+// identity bricks
+[['&none', none],['id', idBrick]].forEach(([nm, f]) => {
+  const el=document.createElement('div'); el.className='pbrick';
+  el.innerHTML=`<span class="pn">${nm}</span><span class="ph">identity</span><span class="pc c-faint">costless</span>`;
+  el.onclick=()=>addRoot(f(),'leaf'); pal.appendChild(el);
+});
+
+// ── canvas render ──
+function render(){
+  const c = $('canvas'); c.innerHTML='';
+  if(!nodes.length){ c.innerHTML='<div class="empty">canvas empty — click a brick in the palette ↑</div>'; }
+  nodes.forEach(n => {
+    const b = n.brick, zero = isZero(b);
+    const el = document.createElement('div');
+    el.className = 'node' + (sel.includes(n.key)?' sel':'') + (zero?' zero':'');
+    const ord = sel.indexOf(n.key);
+    const cc = ccOf(b), col = CC_COLOR[cc]||'c-warn';
+    el.innerHTML =
+      (ord>=0?`<span class="ord">${ord+1}</span>`:`<span class="ord" style="background:transparent;color:var(--faint);border:1px dashed var(--line)">·</span>`)
+      + `<span class="nid">${zero?'0̲  ('+ (n.kind) +' annihilated)':b.id}</span>`
+      + `<span class="ncc ${col}">${zero?'0̲':cc}</span>`
+      + `<span class="nu">util ${zero?0:b.utility}</span>`
+      + `<button class="nx" title="remove">✕</button>`;
+    el.querySelector('.nx').onclick = (e)=>{ e.stopPropagation(); nodes=nodes.filter(x=>x.key!==n.key); sel=sel.filter(k=>k!==n.key); if(target&&target.key===n.key)target=null; render(); };
+    el.onclick = () => toggleSel(n.key);
+    c.appendChild(el);
+  });
+  // op buttons enablement
+  $('op-and').disabled = sel.length!==2;
+  $('op-pipe').disabled = sel.length!==2;
+  $('op-loop').disabled = sel.length!==1;
+  $('selhint').textContent = sel.length===0 ? 'select one brick (⟲) or two (& / |>)'
+    : sel.length===1 ? 'one selected — ⟲ to loop, or pick a second for & / |>'
+    : sel.length===2 ? `${nodeById(sel[0]).brick.id}  ⟨op⟩  ${nodeById(sel[1]).brick.id}` : 'too many selected';
+  renderPanels();
+}
+const nodeById = (k) => nodes.find(n=>n.key===k);
+function toggleSel(k){
+  if(sel.includes(k)) sel=sel.filter(x=>x!==k);
+  else { sel.push(k); if(sel.length>2) sel.shift(); }
+  target = nodeById(sel[sel.length-1]) || null;
+  render();
+}
+
+// ── operators ──
+function snap(makeBrick, kind){
+  const a = nodeById(sel[0]), b = nodeById(sel[1]);
+  const brick = makeBrick(a.brick, b.brick);
+  nodes = nodes.filter(n=>n.key!==a.key && n.key!==b.key);
+  const n = { key:key(), brick, kind, a:a.brick.id, b:b.brick.id };
+  nodes.push(n); sel=[n.key]; target=n; render();
+}
+$('op-and').onclick  = () => snap(composeAnd, 'and');
+$('op-pipe').onclick = () => snap(composePipe, 'pipe');
+$('op-loop').onclick = () => {
+  const a = nodeById(sel[0]);
+  // a loop is a cadence WRAPPER: same brick value/cost, plus a PULSE manifest.
+  const looped = { key:key(), brick: a.brick, kind:'loop', wrapped:a.brick.id, pulse: pulseManifest(a.brick) };
+  nodes = nodes.filter(n=>n.key!==a.key);
+  nodes.push(looped); sel=[looped.key]; target=looped; render();
+  showPulse(looped);
+};
+$('op-clear').onclick = () => { nodes=[]; sel=[]; target=null; render(); $('govern-out').innerHTML='<div class="note">cleared.</div>'; };
+
+// ── the six panels, retargeting `target` ──
+function renderPanels(){
+  const n = target, b = n?.brick;
+  // ③ certificate
+  if(!b){ $('b-cc').textContent='—'; $('b-cc').className='v c-faint'; $('b-dec').textContent='—'; $('b-dec').className='v c-faint'; $('b-util').textContent='—'; $('b-util').className='v c-faint'; $('cert-pills').innerHTML=''; }
+  else {
+    const zero=isZero(b), cc=ccOf(b), col=zero?'c-warn':CC_COLOR[cc];
+    $('b-cc').textContent = zero?'0̲':cc; $('b-cc').className='v '+col;
+    const dec=b.cost.policy.resourceDecision;
+    $('b-dec').textContent = dec; $('b-dec').className='v '+(dec==='allow'?'c-acc':dec==='annihilate'?'c-warn':'c-gold');
+    $('b-util').textContent = zero?0:b.utility; $('b-util').className='v '+(zero?'c-warn':'c-acc');
+    const pills=$('cert-pills'); pills.innerHTML='';
+    const certd=b.cost.verdict.certified;
+    addPill(pills, certd?'certified ✓':'uncertified ✗', certd);
+    if(n.kind&&n.kind!=='leaf') addPill(pills, 'composite ('+n.kind+')', !zero);
+    if(zero) addPill(pills,'annihilated — floor fired', false);
+  }
+  // ④ alethic value
+  const vp=$('val-pills'); vp.innerHTML='';
+  if(!b){ vp.innerHTML='<span class="pill">select a brick</span>'; }
+  else {
+    const v=b.value;
+    addPill(vp, 'β = '+(+v.beta.toFixed(3)), v.beta>=0.5);
+    addPill(vp, 'κ = '+v.kappa+(v.kappa?' (deliberate)':' (acyclic)'), !v.kappa);
+    addPill(vp, 'σ = {'+(v.sigma.join(',')||'∅')+'}', v.sigma.length===0);
+    const pp=document.createElement('span'); pp.className='pill'; pp.textContent='π = '+(v.pi??'·'); vp.appendChild(pp);
+    if(isZero(b)) addPill(vp,'0̲', false);
+  }
+  // ⑤ quantities
+  if(!b||isZero(b)){ $('q-conf').textContent='—';$('q-conf').className='v c-faint'; $('q-cost').textContent='—';$('q-cost').className='v c-faint'; $('q-lat').textContent='—';$('q-lat').className='v c-faint'; }
+  else { $('q-conf').textContent=(+b.q.confidence.toFixed(3)); $('q-conf').className='v c-acc'; $('q-cost').textContent=b.q.cost; $('q-cost').className='v c-gold'; $('q-lat').textContent=b.q.latency; $('q-lat').className='v c-acc2'; }
+  // ⑦ feedback target
+  $('fb-ok').disabled = !b || isZero(b);
+  $('fb-fail').disabled = !b || isZero(b);
+  $('fb-target').textContent = b ? (isZero(b)?'0̲ — nothing to report':('target: '+b.id)) : 'no brick selected';
+}
+function addPill(host, label, on){ const p=document.createElement('span'); p.className='pill '+(on?'on':'off'); p.textContent=label; host.appendChild(p); }
+
+// ── ⑥ governance over the canvas roots (floor-then-gradient) ──
+$('govern').onclick = () => {
+  const out=$('govern-out');
+  const roots = nodes.filter(n=>!isZero(n.brick));
+  const deadRoots = nodes.filter(n=>isZero(n.brick));
+  if(!nodes.length){ out.innerHTML='<div class="note">No bricks on the canvas.</div>'; return; }
+  const budget = parseInt($('budget').value,10);
+  const scored = nodes.map(n=>{
+    const b=n.brick, zero=isZero(b), cc=ccOf(b), certd=b.cost?.verdict?.certified;
+    const over = zero || !certd || CC_ORDER.indexOf(cc) > budget;
+    return { n, b, cc, zero, over, util: zero?0:b.utility };
+  });
+  const live = scored.filter(s=>!s.over).sort((a,b)=>b.util-a.util);
+  const dead = scored.filter(s=>s.over);
+  const winner = live[0], naive=[...scored].sort((a,b)=>b.util-a.util)[0];
+  let html='';
+  if(winner){
+    html+=`<div class="verdict">▸ verdict: <b>${winner.b.id}</b> &nbsp;(${winner.cc}, util ${winner.util})`
+      + (live[1]?` &nbsp;· margin ${winner.util-live[1].util} over runner-up`:'') + `</div>`;
+    if(naive.over){
+      html+=`<div class="annih">⚠ a naive utility-maximizer would pick <b>${naive.zero?'0̲':naive.b.id}</b> (util ${naive.util}) — but ${naive.zero?'it is annihilated':(!naive.b.cost.verdict.certified?'it is uncertified':'its class '+naive.cc+' is over budget')}, so the floor refused it. Utility did not resurrect it.</div>`;
+    }
+  } else {
+    html+=`<div class="verdict" style="background:#1a0d0d;border-color:#633;color:var(--warn)">▸ no admissible plan — every root is annihilated or over budget.</div>`;
+  }
+  if(dead.length){
+    html+=`<div class="annih">0̲ floored: `+dead.map(s=>`<b>${s.zero?'(annihilated)':s.b.id}</b> (util ${s.util} → 0̲${s.zero?'':', σ:{cost:'+s.cc+'}'})`).join(' · ')+`</div>`;
+  }
+  out.innerHTML=html;
+};
+
+// ── ⑦ feedback: learn → OutcomeSignal (CloudEvents v1) ──
+function outcomeSignal(b, outcome){
+  return {
+    specversion:'1.0',
+    type:'org.opensentience.pulse.OutcomeSignal',
+    source:'/weave/forge/compose',
+    id:'oc-'+(Math.random()*1e9|0),
+    time:new Date().toISOString(),
+    subject:b.id,
+    datacontenttype:'application/json',
+    data:{
+      phase:'learn', outcome,
+      holder:b.holder,
+      certified:b.cost.verdict.certified,
+      costClass:b.cost.verdict.costClass,
+      decision:b.cost.policy.resourceDecision,
+      confidence:b.q.confidence, cost:b.q.cost, latency:b.q.latency,
+      utility:b.utility
+    }
+  };
+}
+function pulseManifest(b){
+  return {
+    loop:'⟲('+b.id+')',
+    phases:['retrieve','route','act','learn','consolidate'],
+    cadence:'on-demand',
+    substrates:[ Array.isArray(b.holder)?b.holder.join('+'):(b.holder||'unknown') ],
+    invariants:{ costClass:b.cost.verdict.costClass, certified:b.cost.verdict.certified, floor:b.floor||[] },
+    signals:{ emits:['OutcomeSignal','ReputationUpdate','ConsolidationEvent'], on:'learn' }
+  };
+}
+function showPulse(node){ $('fb-out').textContent = '// ⟲ '+node.brick.id+'.pulse.json\n' + JSON.stringify(node.pulse, null, 2); }
+$('fb-ok').onclick   = () => { if(target&&!isZero(target.brick)) $('fb-out').textContent = '// OutcomeSignal (learn phase)\n'+JSON.stringify(outcomeSignal(target.brick,'success'),null,2); };
+$('fb-fail').onclick = () => { if(target&&!isZero(target.brick)) $('fb-out').textContent = '// OutcomeSignal (learn phase)\n'+JSON.stringify(outcomeSignal(target.brick,'failure'),null,2); };
+
+// ── boot: drop the worked 3-brick coalition so the page is alive on load ──
+(function boot(){
+  const r=addRoot(mkPaletteBrick(PALETTE[0]),'leaf'); // retrieve
+  const ce=addRoot(mkPaletteBrick(PALETTE[1]),'leaf'); // certify
+  // retrieve |> certify
+  sel=[r.key,ce.key]; snap(composePipe,'pipe');
+  const g=addRoot(mkPaletteBrick(PALETTE[2]),'leaf');  // govern
+  sel=[nodes[0].key, g.key]; snap(composePipe,'pipe'); // (retrieve|>certify) |> govern
+})();
+render();
+</script>
+</body>
+</html>

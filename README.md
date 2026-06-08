@@ -1,7 +1,8 @@
 # Weave — a static cost certificate for the [&] stack's resource rung
 
 A research prototype, built invariant-first: find the invariants, state the rules, enforce them in
-code, close the loop. Plain Node (v18+), no dependencies. Run any file with `node <file>`.
+code, close the loop. Plain Node (v18+), no dependencies. Run any script with `node <path>` (e.g.
+`node src/weave.mjs`), or use the npm scripts: `npm run demo`, `npm test`, `npm run proofs`.
 
 **Positioning (read `weave-and-the-ampersand-stack.md` first).** Weave began as "a better Bend/HVM,"
 but with box-and-box and OpenSentience in frame that framing is wrong. Weave is *not* a Bend/HVM
@@ -11,21 +12,64 @@ cost certificate** computed before a computation runs, not a runtime meter read 
 GitHub in early preview) is the intended execution backend; the cost certificate is
 substrate-independent, so lowering to HVM4 is an execution choice, not a correctness dependency.
 
-## Files
+## New here? Check the proof, don't take my word for it
+
+[`proofs/`](./proofs/) holds **proof you can verify without running anything** from committed text — no
+install, no run. Read [`proofs/README.md`](./proofs/README.md), then eyeball
+[`proofs/RECEIPTS.txt`](./proofs/RECEIPTS.txt) (the static cost grade vs. measured growth, checkable by
+finite differences; the falsifiable soundness predicate; a cross-check against the independent HVM4
+runtime) and [`proofs/transcripts/`](./proofs/transcripts/) (the exact stdout of every script,
+claim-by-claim). Regenerate with `node proofs/generate.mjs` and `node tools/regenerate-proofs.mjs`.
+
+## Layout
+
+```
+weave/
+  README.md                            this file
+  proofs/     RECEIPTS.txt (by-hand-checkable) + transcripts/ (per-script) + generate.mjs + README.md
+  src/        the engine (pure library, exports an API; each runs a demo when invoked directly)
+  test/       the validation suites (differential / property / soundness / cross-engine)
+  surface/    weave_surface.exs        the Elixir macro front-end
+  tools/      regenerate-proofs.mjs    rebuilds proofs/transcripts/ (--check verifies no drift)
+  docs/        positioning + design docs
+```
+
+### `docs/` — read these first
+
+| File | What it is |
+|------|------------|
+| `docs/weave-and-the-ampersand-stack.md` | **Start here.** Repositions Weave inside the [&] stack, grades the stack against the AIOS agent-OS reference (gap analysis), and specifies the cost-certificate → resource-rung integration and the HVM4 backend plan. |
+| `docs/weave-design.md` | The design doc: thesis, openings in Bend, the five invariants, the closed loop. **Read after the positioning doc — it predates the [&]-stack reframe and the validation work, so treat it as the starting hypothesis.** |
+
+### `src/` — the engine
 
 | File | What it is | Run |
 |------|------------|-----|
-| `weave-and-the-ampersand-stack.md` | **Start here.** Repositions Weave inside the [&] stack, grades the whole stack against the AIOS agent-OS reference (the "what else does the house need" gap analysis), and specifies the cost-certificate → resource-rung integration and the HVM4 backend plan. | — |
-| `weave-design.md` | The design doc: the thesis, the openings in Bend, the five invariants, the closed loop. **Read after the positioning doc — it predates the [&]-stack reframe and the validation work, so treat it as the starting hypothesis.** | — |
-| `weave.mjs` | The core. An Interaction-Calculus reducer (β + sup/dup, metered, with time and space vetoes), the static invariant checker (affine / label-coherence / κ), and a small superposed-search + evolution loop. Exports its API; runs a demo when invoked directly. | `node weave.mjs` |
-| `weave-validate.mjs` | Differential testing: linearize a pure λ-term, reduce with Weave, compare the normal form to a reference normal-order evaluator. **12/12.** | `node weave-validate.mjs` |
-| `weave-proptest.mjs` | Checker-gated property testing over thousands of random simply-typed terms. Hunts for any term the checker accepts but the reducer mis-evaluates. None found. | `node weave-proptest.mjs` |
-| `weave-cost.mjs` | The cost cliff, measured: addition (linear), multiplication (polynomial), exponentiation towers (detonate). Shows source size ≠ cost. | `node weave-cost.mjs` |
-| `weave-classify.mjs` | Cost as a type, statically. Infers types, reports the iteration *rank* (poly / exp / tower) with no execution, and cross-checks against measured cost. | `node weave-classify.mjs` |
-| `weave-soundness.mjs` | Stress-tests the classifier's verdict against measured cost over an adversarial battery plus ~2000 random terms. Falsifiable predicate: no rank≤1 term detonated. | `node weave-soundness.mjs` |
-| `weave-backend.mjs` | The "backend" the surface lowers to (the Nx/EXLA role): reads an IR term as JSON and runs the real engine (normalize / classify / check). | `node weave-backend.mjs <op> '<ir-json>'` |
-| `weave_surface.exs` | An Elixir macro surface. `defweave` compiles native `fn` syntax — plus integer literals, `+`/`*`/`-`, list literals, and `fold` — into Weave IR at compile time, then shells to the backend. | `elixir weave_surface.exs` |
-| `weave-fold-test.mjs` | Differential test for the primitive + structural-recursion layer: linearized `fold` vs JS ground truth over random lists × {add, mul, sub}. **1200/1200.** | `node weave-fold-test.mjs` |
+| `src/weave.mjs` | The core. An Interaction-Calculus reducer (β + sup/dup, metered, with time and space vetoes), the static invariant checker (affine / label-coherence / κ), and a small superposed-search + evolution loop. | `node src/weave.mjs` |
+| `src/weave-classify.mjs` | Cost as a type, statically. Infers types, reports the iteration *rank* (poly / exp / tower) with no execution, and cross-checks against measured cost. | `node src/weave-classify.mjs` |
+| `src/weave-eal.mjs` | **The certificate.** Type-directed EAL box-decoration: the static box-nesting *depth* (= certified elementary tower height) with a per-binder certificate. Upgrades the rank proxy toward a real bound. | `node src/weave-eal.mjs` |
+| `src/weave-eal-degree.mjs` | Stage B: recovers the polynomial *degree* inside the depth-1 rung by finite differences — the measured ground truth that static LAL (Baillot–Terui) would prove. | `node src/weave-eal-degree.mjs` |
+| `src/weave-cost.mjs` | The cost cliff, measured: addition (linear), multiplication (polynomial), exponentiation towers (detonate). Shows source size ≠ cost. | `node src/weave-cost.mjs` |
+| `src/weave-hvm4.mjs` | Local round-trip lowering to a generic HVM-core syntax + inverse parser (semantics-preserving validation, no external binary). | `node src/weave-hvm4.mjs` |
+| `src/weave-backend.mjs` | The "backend" the surface lowers to (the Nx/EXLA role): reads an IR term as JSON and runs the real engine. | `node src/weave-backend.mjs <op> '<ir-json>'` |
+
+### `test/` — the validation suites
+
+| File | What it is | Run |
+|------|------------|-----|
+| `test/weave-validate.mjs` | Differential testing: linearize a pure λ-term, reduce with Weave, compare the normal form to a reference normal-order evaluator. **12/12.** | `node test/weave-validate.mjs` |
+| `test/weave-proptest.mjs` | Checker-gated property testing over thousands of random simply-typed terms. None mis-evaluated. | `node test/weave-proptest.mjs` |
+| `test/weave-soundness.mjs` | Stress-tests the classifier verdict against measured cost over an adversarial battery + ~2000 random terms. Falsifiable predicate: no rank≤1 term detonated. | `node test/weave-soundness.mjs` |
+| `test/weave-fold-test.mjs` | Differential test for the structural-recursion layer: linearized `fold` vs JS ground truth over random lists × {add, mul, sub}. **1200/1200.** | `node test/weave-fold-test.mjs` |
+| `test/weave-eal-test.mjs` | Validates the EAL **certificate** against *measured* cost (not the proxy): certified-cheap never detonates, `eal:true` reduces oracle-free (no residue), depth matches the validated rank. | `node test/weave-eal-test.mjs` |
+| `test/weave-hvm4-run.mjs` | The real HVM4 backend: lowers to HVM4 surface syntax, shells to the built binary, and differential-tests integer outputs against the toy reducer. **6/6.** Needs `~/hvm4/src/hvm` (or `HVM4_BIN=`). | `node test/weave-hvm4-run.mjs` |
+
+### `surface/` — the Elixir front-end
+
+| File | What it is | Run |
+|------|------------|-----|
+| `surface/weave_surface.exs` | An Elixir macro surface. `defweave` compiles native `fn` syntax — integer literals, `+`/`*`/`-`, list literals, `fold` — into Weave IR at compile time, then shells to `../src/weave-backend.mjs`. | `elixir surface/weave_surface.exs` |
+| `surface/weave_govern.exs` | **The stack, end to end.** Authors four plans with `defweave`, certifies each one's cost class with `Weave.classify` (static — no execution), shells to the box-and-box governance kernel (the highest-utility exponential is **annihilated** `0̲` by the resource-rung floor), **runs** the polynomial winner to a real answer (`210`), then runs the refused tower anyway and watches it **detonate** (`over-space`) — vindicating the static refusal. Cost is a type, and the type decides. | `elixir surface/weave_govern.exs` |
 
 ## Honest status
 
@@ -65,7 +109,8 @@ The defensible core is substructural: you get a guarantee by removing the struct
 let you violate it, so the violation becomes inexpressible. In this style the *safety invariant* and
 the *cost guarantee* are the same object — linearity-with-stratification simultaneously makes
 reduction sound, licenses the oracle-free fast path, and grades cost. Two of those faces now have
-running artifacts (soundness: `weave-validate`; cost: `weave-classify`).
+running artifacts (soundness: `test/weave-validate`; cost: `src/weave-classify`), and all three are
+exhibited together — checkable by hand — in [`proofs/RECEIPTS.txt`](./proofs/RECEIPTS.txt).
 
 Placed in the [&] stack, this is the **resource rung** made into a static certificate. box-and-box's
 resource rung is a *runtime* ledger ("what was spent"); Weave is the *static* certificate ("what can
@@ -76,7 +121,13 @@ pattern the kernel already uses for forbidden actions. Three of your theses conv
 the reasoning), and **cost-as-certificate** (the discipline that makes the fast path sound is the one
 that bounds cost). See `weave-and-the-ampersand-stack.md` for the full integration and gap analysis.
 
-The single next step that would convert the cost classifier from validated heuristic to certified
-bound: replace the STLC-type-order proxy with real Elementary/Light-Affine inference (Baillot–Terui;
-decidable, polynomial), so the rung carries a theorem and the analysis stops going silent on harder
-terms.
+**Update — the next step is taken (partway).** `src/weave-eal.mjs` now computes a real EAL
+box-decoration: a static box-nesting *depth* (= certified elementary tower height) with a per-binder
+certificate, validated against *measured* cost in `test/weave-eal-test.mjs` (certified-cheap never
+detonated; every `eal:true` term reduced oracle-free). The depth-1 rung's polynomial *degree* is
+recovered empirically in `src/weave-eal-degree.mjs`. And `test/weave-hvm4-run.mjs` wires the real
+HVM4 backend (6/6 differential agreement), confirming the certificate is substrate-independent.
+
+What remains genuinely open: the polynomial **degree** is still *measured*, not statically inferred.
+Pinning it by type is **static LAL** inference (Light Affine Logic / Baillot–Terui §-boxes) — the
+named boundary. EAL gives the certified *tower height*; LAL would give the certified *degree*.

@@ -2,7 +2,7 @@
 // Generate random simply-typed (hence normalizing) closed lambda-terms, linearize (insert Dups),
 // run the static checker, reduce with Weave, and compare to a reference normal-order evaluator.
 // We are hunting for the dangerous case: a term the checker ACCEPTS but Weave mis-evaluates.
-import { Var, Lam, App, Dup, normalize, checkInvariants } from "./weave.mjs";
+import { Var, Lam, App, Dup, normalize, checkInvariants } from "../src/weave.mjs";
 
 let C = 0; const nm = (p) => `${p}~${C++}`; let L = 0; const lbl = () => `dl${L++}`;
 // ---- reference evaluator (ground truth) ----

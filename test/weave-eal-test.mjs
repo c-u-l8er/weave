@@ -11,9 +11,9 @@
 //      Expected to hold (the proxy was a sound correlate there); a divergence would flag a bug in
 //      one of them. The value EAL adds over agreement is the certificate (A/B), not a new number.
 
-import { inferEAL } from "./weave-eal.mjs";
-import { classify } from "./weave-classify.mjs";
-import { Var, Lam, App, Dup, normalize } from "./weave.mjs";
+import { inferEAL } from "../src/weave-eal.mjs";
+import { classify } from "../src/weave-classify.mjs";
+import { Var, Lam, App, Dup, normalize } from "../src/weave.mjs";
 
 // ---- linearize + measure (shared shape with weave-soundness.mjs) ----
 let C = 0; const nm = (p) => `${p}~${C++}`; let L = 0; const lbl = () => `dl${L++}`;

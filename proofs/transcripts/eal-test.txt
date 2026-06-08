@@ -1,0 +1,30 @@
+==============================================================================
+  weave proof transcript — eal-test
+  Certificate vs measured cost; oracle-free-safe witness
+------------------------------------------------------------------------------
+  command   : node test/weave-eal-test.mjs
+  generated : 2026-06-07   (regenerate: node tools/regenerate-proofs.mjs)
+  node      : v25.2.1
+  exit code : 0
+==============================================================================
+ADVERSARIAL BATTERY (EAL certificate vs measured cost):
+  plus c20 c20                   eal=Y depth  1 polynomial                 45 i
+  mul c8 c8                      eal=Y depth  1 polynomial                 145 i
+  mul c12 c12                    eal=Y depth  1 polynomial                 313 i
+  mul (mul c4 c4) c4             eal=Y depth  1 polynomial                 151 i
+  plus (mul c6 c6) (mul c6 c6)   eal=Y depth  1 polynomial                 177 i
+  c4 c2 (=2^4)                   eal=Y depth  2 exponential                54 i
+  c10 c2 (=2^10)                 eal=Y depth  2 exponential                2112 i
+  c12 c2 (=2^12)                 eal=Y depth  2 exponential                DETONATED (over-space)
+  tower(4)                       eal=Y depth  4 non-elementary (tower ~4)  DETONATED (over-space)
+  tower(5)                       eal=Y depth  5 non-elementary (tower ~5)  DETONATED (over-space)
+
+random simply-typed terms checked: 2000   (EAL-certified: 2010 of 2010)
+detonations: 3   (min EAL depth among them: 2)
+
+A. COST PREDICATE — eal depth<=1 terms that detonated: 0
+B. ORACLE-FREE-SAFE — eal:true terms with residual superposition: 0
+C. AGREEMENT vs proxy — checked 465, divergences: 0
+
+PASS: certificate sound on this population — no certified-cheap term detonated, every eal:true
+      term reduced oracle-free (no residue), and EAL depth matched the validated proxy rank.

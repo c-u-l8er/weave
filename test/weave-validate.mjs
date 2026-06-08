@@ -3,7 +3,7 @@
 // Dups for every binder used >1x, unique label each, satisfying I1/I2), reduce with Weave, read
 // back. PASS iff the two normal forms are alpha-equal. Any FAIL is a real soundness bug in the
 // DUP-LAM / DUP-SUP machinery.
-import { Var, Lam, App, Sup, Dup, normalize } from "./weave.mjs";
+import { Var, Lam, App, Sup, Dup, normalize } from "../src/weave.mjs";
 
 let C = 0; const nm = (p) => `${p}~${C++}`;
 let L = 0; const lbl = () => `dl${L++}`;
