@@ -1,5 +1,7 @@
 # Weave — a better Bend, built invariant-first (consolidated)
 
+> **Part of the [&] Protocol stack** · [Ecosystem overview](../../ECOSYSTEM.md) · [Three-protocol stack](../../PULSE/docs/THREE_PROTOCOL_STACK.md) · [Stack status](../../STACK_COMPLETION.md)
+
 A design for a massively-parallel language in the lineage of Bend/HVM, derived invariant-first:
 **find the invariants → state the rules → enforce them in code → close the loop.** This version
 folds in everything the validation work established, including two places where testing overturned
@@ -17,8 +19,9 @@ seriously — turned from a runtime meter into a *static cost certificate* compu
 computation runs. HVM4 (early-preview on GitHub) is the intended execution backend; because the
 certificate is substrate-independent, lowering to it is an execution choice, not a correctness
 dependency. Read Parts I–V as the technical derivation of that certificate. The companion
-`weave-and-the-ampersand-stack.md` carries the positioning, the gap analysis against the AIOS
-agent-OS reference, and the integration into `govern()`. Where this doc says "a better Bend," read
+[Weave and the Ampersand Stack](weave-and-the-ampersand-stack.md) carries the positioning, the gap
+analysis against the AIOS agent-OS reference, and the integration into `govern()`. Where this doc
+says "a better Bend," read
 "the resource rung's certificate."
 
 ---
